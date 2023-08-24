@@ -30,6 +30,10 @@ variable "kubernetes_flavor_name" {
     type = string
     default = "d2-4"
 }
+variable "network" {
+    type = string
+    default = "public"
+}
 variable "kubernetes_nodepool_name" {
     type = string
     default = "testing"
