@@ -23,7 +23,7 @@ resource "ovh_cloud_project" "cloudproject" {
 
 resource "ovh_cloud_project_network_private" "net" {
     count = var.network == "private" ? 1 : 0
-    service_name = var.project
+    service_name = cloudproject.project_id
     name       = var.kubernetes_cluster_name
     regions     = [var.os_region_name]
     vlan_id    = var.kubernetes_vlan_id
@@ -34,7 +34,7 @@ resource "ovh_cloud_project_network_private" "net" {
 
 resource "ovh_cloud_project_network_private_subnet" "subnet" {
     count = var.network == "private" ? 1 : 0k
-    service_name = var.project
+    service_name = cloudproject.project_id
     network_id = ovh_cloud_project_network_private.net[0].id
     region     = var.os_region_name
     start      = var.kubernetes_private_subnet_start_ip
@@ -49,7 +49,7 @@ resource "ovh_cloud_project_network_private_subnet" "subnet" {
 }
 
 resource "ovh_cloud_project_kube" "kubernetes_cluster" {
-    service_name = var.project
+    service_name = cloudproject.project_id
     name         = var.kubernetes_cluster_name
     region     = var.os_region_name
     version      = var.kubernetes_version
@@ -60,7 +60,7 @@ resource "ovh_cloud_project_kube" "kubernetes_cluster" {
 }
 
 resource "ovh_cloud_project_kube_nodepool" "main_pool" {
-    service_name  = var.project
+    service_name  = cloudproject.project_id
     kube_id       = ovh_cloud_project_kube.kubernetes_cluster.id
     name          = var.kubernetes_nodepool_name
     flavor_name   = var.kubernetes_flavor_name

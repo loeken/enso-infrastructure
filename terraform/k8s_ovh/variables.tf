@@ -66,7 +66,3 @@ variable "kubernetes_nodepool_min_nodes" {
     type = string
     default = "1"
 }
-variable "project" {
-    type = string
-    default = "d2ef0005942e4fafb37a769f17fabdb4"
-}
