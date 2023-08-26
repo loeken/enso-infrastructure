@@ -26,17 +26,9 @@ variable "network_region_name" {
     type = string
     default = "GRA11"
 }
-variable "kubernetes_flavor_name" {
-    type = string
-    default = "d2-4"
-}
 variable "network" {
     type = string
     default = "public"
-}
-variable "kubernetes_nodepool_name" {
-    type = string
-    default = "testing"
 }
 variable "kubernetes_private_subnet_start_ip" {
     type = string
@@ -50,19 +42,57 @@ variable "kubernetes_private_subnet_network" {
     type = string
     default = "172.16.200.0/24"
 }
+
 variable "kubernetes_version" {
     type = string
     default = "1.22"
 }
-variable "kubernetes_nodepool_desired_nodes" {
+
+variable "kubernetes_flavor_name_monthly" {
+    type = string
+    default = "d2-4"
+}
+variable "kubernetes_nodepool_name_monthly" {
+    type = string
+    default = "testing"
+}
+variable "kubernetes_nodepool_desired_nodes_monthly" {
     type = string
     default = "1"
 }
-variable "kubernetes_nodepool_max_nodes" {
+variable "kubernetes_nodepool_max_nodes_monthly" {
     type = string
     default = "5"
 }
-variable "kubernetes_nodepool_min_nodes" {
+variable "kubernetes_nodepool_min_nodes_monthly" {
     type = string
     default = "1"
+}
+
+
+
+variable "kubernetes_flavor_name_hourly" {
+    type = string
+    default = "d2-4"
+}
+variable "kubernetes_nodepool_name_hourly" {
+    type = string
+    default = "testing"
+}
+variable "kubernetes_nodepool_desired_nodes_hourly" {
+    type = string
+    default = "1"
+}
+variable "kubernetes_nodepool_max_nodes_hourly" {
+    type = string
+    default = "5"
+}
+variable "kubernetes_nodepool_min_nodes_hourly" {
+    type = string
+    default = "1"
+}
+
+variable "project" {
+    type = string
+    default = "myproject"
 }
