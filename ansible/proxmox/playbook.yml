@@ -32,6 +32,22 @@
         line: '{{ ansible_facts.default_ipv4.address }}\2'
         backrefs: yes
 
+    - name: Gather network facts
+      ansible.builtin.setup:
+        gather_subset:
+          - network
+
+    - name: Set network interfaces
+      ansible.builtin.template:
+        src: templates/interfaces.j2
+        dest: "{{ interfaces_file }}"
+        mode: '0644'
+      register: network_interface
+
+    - name: Reload network interfaces
+      ansible.builtin.command: ifreload --all
+      when: network_interface.changed
+
     - name: Add Proxmox to APT sources
       ansible.builtin.copy:
         dest: "{{ proxmox_list }}"
@@ -142,22 +158,6 @@
       ansible.builtin.user:
         name: root
         password: "{{ root_password | password_hash('sha512') }}"
-
-    - name: Gather network facts
-      ansible.builtin.setup:
-        gather_subset:
-          - network
-
-    - name: Set network interfaces
-      ansible.builtin.template:
-        src: templates/interfaces.j2
-        dest: "{{ interfaces_file }}"
-        mode: '0644'
-      register: network_interface
-
-    - name: Reload network interfaces
-      ansible.builtin.command: ifreload --all
-      when: network_interface.changed
 
     - name: Disable SSH strict host key checking
       ansible.builtin.lineinfile:
