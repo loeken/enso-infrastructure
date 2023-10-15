@@ -34,7 +34,9 @@
 
     - name: Install ifupdown
       ansible.builtin.apt:
-        name: ifupdown2
+        name:
+          - ifupdown2
+          - bridge-utils
 
     - name: Gather facts
       ansible.builtin.setup:
@@ -45,14 +47,13 @@
       ansible.builtin.set_fact:
         existing_vmbr_interfaces: "{{ ansible_facts.interfaces | select('match', '^vmbr.*') | list }}"
 
-    - name: Identify physical interfaces and sort them
+    - name: Identify physical interfaces and sort them in reverse
       ansible.builtin.set_fact:
-        physical_interfaces: "{{ ansible_facts.interfaces | reject('match', '^(lo|vmbr.*)$') | list | sort }}"
+        physical_interfaces: "{{ ansible_facts.interfaces | reject('match', '^(lo|vmbr.*)$') | list | sort | reverse }}"
 
     - name: Identify the primary interface
       ansible.builtin.set_fact:
         primary_interface: "{{ physical_interfaces | first }}"
-
 
     - name: Set network interfaces
       ansible.builtin.template:
@@ -153,7 +154,6 @@
           - proxmox-ve
           - postfix
           - open-iscsi
-          - bridge-utils
           - pip
           - libguestfs-tools
         state: latest
