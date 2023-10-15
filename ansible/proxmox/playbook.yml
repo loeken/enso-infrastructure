@@ -28,8 +28,9 @@
     - name: Update hosts file
       ansible.builtin.lineinfile:
         path: /etc/hosts
-        regexp: '^(.*127\.0\.1\.1.*)$'
-        line: '\1 {{ ansible_facts.default_ipv4.address }}'
+        regexp: '^(127\.0\.1\.1)(\s+.+)$'
+        line: '{{ ansible_facts.default_ipv4.address }}\2'
+        backrefs: yes
 
     - name: Add Proxmox to APT sources
       ansible.builtin.copy:
