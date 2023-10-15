@@ -14,18 +14,20 @@ source /etc/network/interfaces.d/*
 auto lo
 iface lo inet loopback
 
-{% if ansible_facts.default_ipv4.interface != 'vmbr0' %}
-auto {{ ansible_facts.default_ipv4.interface }}
-iface {{ ansible_facts.default_ipv4.interface }} inet dhcp
-{% endif %}
+{% for interface in ansible_facts.interfaces %}
+{% if interface != 'lo' and interface != 'vmbr0' %}
+auto {{ interface }}
+iface {{ interface }} inet dhcp
 
-auto vmbr0
-iface vmbr0 inet static
+auto vmbr{{ loop.index }}
+iface vmbr{{ loop.index }} inet static
     address {{ ansible_facts.default_ipv4.address }}
     netmask {{ ansible_facts.default_ipv4.netmask }}
     gateway {{ ansible_facts.default_ipv4.gateway }}
-    bridge-ports {{ ansible_facts.default_ipv4.interface }}
+    bridge-ports {{ interface }}
     bridge-stp off
     bridge-fd 0
     bridge-vlan-aware yes
     bridge-vids 2-4094
+{% endif %}
+{% endfor %}

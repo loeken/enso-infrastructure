@@ -143,20 +143,21 @@
         name: root
         password: "{{ root_password | password_hash('sha512') }}"
 
+    - name: Gather network facts
+      ansible.builtin.setup:
+        gather_subset:
+          - network
+
     - name: Set network interfaces
       ansible.builtin.template:
         src: templates/interfaces.j2
         dest: "{{ interfaces_file }}"
         mode: '0644'
-      when: ansible_facts.default_ipv4.interface != "vmbr0"
+      loop: "{{ ansible_facts.interfaces }}"
+      loop_control:
+        loop_var: interface
       register: network_interface
-
-    - name: Set network interfaces 2
-      ansible.builtin.template:
-        src: templates/interfaces.j2
-        dest: "{{ interfaces_file }}.new"
-        mode: '0644'
-      when: ansible_facts.default_ipv4.interface != "vmbr0" and network_interface.changed
+      when: interface != "lo" and interface != "vmbr0"
 
     - name: Reload network interfaces
       ansible.builtin.command: ifreload --all
