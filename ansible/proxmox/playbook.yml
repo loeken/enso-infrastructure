@@ -153,11 +153,7 @@
         src: templates/interfaces.j2
         dest: "{{ interfaces_file }}"
         mode: '0644'
-      loop: "{{ ansible_facts.interfaces }}"
-      loop_control:
-        loop_var: interface
       register: network_interface
-      when: interface != "lo" and interface != "vmbr0"
 
     - name: Reload network interfaces
       ansible.builtin.command: ifreload --all
