@@ -7,44 +7,31 @@ source /etc/network/interfaces.d/*
 auto lo
 iface lo inet loopback
 
-{% set exclusion_list = ['lo'] %}
-{% set bridge_index = 0 %}
+{% for iface in existing_vmbr_interfaces %}
+# Skip existing vmbr interface: {{ iface }}
+{% endfor %}
 
-{% for interface in ansible_facts.interfaces %}
-  {% if interface not in exclusion_list and "vmbr" not in interface %}
+{% for iface in physical_interfaces %}
+{% set bridge_name = 'vmbr' ~ loop.index0 %}
+# {% if loop.first %}Primary{% else %}Secondary{% endif %} interface
+auto {{ iface }}
+iface {{ iface }} inet manual
 
-    {# Determine if this is the primary interface #}
-    {% if ansible_facts.default_ipv4 is defined and interface == ansible_facts.default_ipv4.interface %}
-    # Primary interface
-    auto {{ interface }}
-    iface {{ interface }} inet manual
-
-    # Bridge for the primary interface
-    auto vmbr{{ bridge_index }}
-    iface vmbr{{ bridge_index }} inet static
-        address {{ ansible_facts.default_ipv4.address }}
-        netmask {{ ansible_facts.default_ipv4.netmask }}
-        gateway {{ ansible_facts.default_ipv4.gateway }}
-        bridge-ports {{ interface }}
-        bridge-stp off
-        bridge-fd 0
-        bridge-vlan-aware yes
-        bridge-vids 2-4094
-    {% else %}
-    # Secondary interface
-    auto {{ interface }}
-    iface {{ interface }} inet manual
-
-    # Bridge for the secondary interface
-    auto vmbr{{ bridge_index }}
-    iface vmbr{{ bridge_index }} inet manual
-        bridge-ports {{ interface }}
-        bridge-stp off
-        bridge-fd 0
-        bridge-vlan-aware yes
-        bridge-vids 2-4094
-    {% endif %}
-
-    {% set bridge_index = bridge_index + 1 %}
-  {% endif %}
+{% if loop.first %}
+# Bridge for the primary interface
+auto {{ bridge_name }}
+iface {{ bridge_name }} inet static
+    address 192.168.178.105
+    netmask 255.255.255.0
+    gateway 192.168.178.1
+{% else %}
+# Bridge for the secondary interface
+auto {{ bridge_name }}
+iface {{ bridge_name }} inet manual
+{% endif %}
+    bridge-ports {{ iface }}
+    bridge-stp off
+    bridge-fd 0
+    bridge-vlan-aware yes
+    bridge-vids 2-4094
 {% endfor %}

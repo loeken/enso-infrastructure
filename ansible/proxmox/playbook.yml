@@ -35,11 +35,23 @@
     - name: Install ifupdown
       ansible.builtin.apt:
         name: ifupdown2
-
-    - name: Gather network facts
-      ansible.builtin.setup:
+        
+    - name: Gather facts
+      setup:
         gather_subset:
           - network
+
+    - name: Identify existing vmbr* interfaces
+      set_fact:
+        existing_vmbr_interfaces: "{{ ansible_facts.interfaces | select('match', '^vmbr.*') | list }}"
+
+    - name: Identify physical interfaces
+      set_fact:
+        physical_interfaces: "{{ ansible_facts.interfaces | reject('match', '^(lo|vmbr.*)$') | list }}"
+
+    - name: Identify the primary interface
+      set_fact:
+        primary_interface: "{{ physical_interfaces | first }}"
 
     - name: Set network interfaces
       ansible.builtin.template:
