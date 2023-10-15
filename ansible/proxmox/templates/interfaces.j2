@@ -13,19 +13,19 @@ iface lo inet loopback
 
 {% for iface in physical_interfaces %}
 {% set bridge_name = 'vmbr' ~ loop.index0 %}
-# {% if loop.index == 1 %}WAN{% else %}LAN{% endif %} interface
+# {% if loop.index == 2 %}WAN{% else %}LAN{% endif %} interface
 auto {{ iface }}
 iface {{ iface }} inet manual
 
-{% if loop.index == 1 %}
-# Bridge for the primary interface
+{% if loop.index == 2 %}
+# Bridge for the WAN interface
 auto {{ bridge_name }}
 iface {{ bridge_name }} inet static
     address 192.168.178.105
     netmask 255.255.255.0
     gateway 192.168.178.1
 {% else %}
-# Bridge for the secondary interface
+# Bridge for the LAN interface
 auto {{ bridge_name }}
 iface {{ bridge_name }} inet manual
 {% endif %}
