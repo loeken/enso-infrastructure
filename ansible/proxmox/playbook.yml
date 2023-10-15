@@ -272,6 +272,17 @@
         msg: "Corosync service is not active"
       when: corosync_status.failed
 
+    - name: Gather facts from Proxmox
+      community.general.proxmox_facts:
+        api_user: "{{ proxmox_user }}"
+        api_password: "{{ root_password }}"
+        api_host: "localhost"
+      register: proxmox_facts
+
+    - name: Check if VM with name template-{{ hostname }} exists
+      set_fact:
+        vm_exists: "{{ (proxmox_facts.ansible_facts.proxmox | selectattr('name', 'defined') | map(attribute='name') | list) | intersect(['template-' + hostname]) | length > 0 }}"
+
     - name: Create VM
       community.general.proxmox_kvm:
         api_user: "{{ proxmox_user }}"
@@ -291,6 +302,7 @@
       until: result is succeeded
       retries: 3
       delay: 10
+      when: not vm_exists
 
     - block:
       - name: Download NoCloud Debian image
@@ -361,6 +373,17 @@
         net_dict: "{{ net_dict | combine({ 'net' ~ loop.index0|string : 'virtio,bridge=' ~ item }) }}"
       loop: "{{ vmbr_interfaces }}"
 
+    - name: Gather facts from Proxmox
+      community.general.proxmox_facts:
+        api_user: "{{ proxmox_user }}"
+        api_password: "{{ root_password }}"
+        api_host: "localhost"
+      register: proxmox_facts
+
+    - name: Check if OPNsense VM with name template-{{ hostname }} exists
+      set_fact:
+        opnsense_vm_exists: "{{ (proxmox_facts.ansible_facts.proxmox | selectattr('name', 'defined') | map(attribute='name') | list) | intersect(['template-' + hostname]) | length > 0 }}"
+
     - name: Create OPNsense VM
       community.general.proxmox_kvm:
         api_user: "{{ proxmox_user }}"
@@ -380,6 +403,7 @@
       until: opnsense_result is succeeded
       retries: 3
       delay: 10
+      when: not opnsense_vm_exists
 
     - block:
       - name: Download OPNsense nano image
