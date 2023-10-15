@@ -336,14 +336,18 @@
 
       when: result is changed
 
-    - name: Filter out unwanted interfaces like 'lo'
+    - name: Select only vmbr* interfaces
       set_fact:
-        filtered_interfaces: "{{ ansible_facts.interfaces | reject('equalto', 'lo') | list }}"
-      
-    - name: Build net dictionary for Proxmox VM
+        vmbr_interfaces: "{{ ansible_facts.interfaces | select('match', '^vmbr[0-9]+$') | list }}"
+
+    - name: Initialize empty net_dict
       set_fact:
-        net_dict: "{{ net_dict | default({}) | combine({ 'net' ~ loop.index0 : 'virtio,bridge=' ~ item }) }}"
-      loop: "{{ filtered_interfaces }}"
+        net_dict: {}
+
+    - name: Build net dictionary for OPNsense VM
+      set_fact:
+        net_dict: "{{ net_dict | combine({ 'net' ~ loop.index0|string : 'virtio,bridge=' ~ item }) }}"
+      loop: "{{ vmbr_interfaces }}"
 
     - name: Create OPNsense VM
       community.general.proxmox_kvm:
