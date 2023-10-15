@@ -362,15 +362,18 @@
       set_fact:
         vmbr_interfaces: "{{ ansible_facts.interfaces | select('match', '^vmbr[0-9]+$') | list }}"
 
-    - name: Initialize empty net_dict
+    - name: Initialize empty net_dict_list
       set_fact:
-        net_dict: {}
+        net_dict_list: []
 
-    - name: Build net dictionary for OPNsense VM
+    - name: Build net dictionary list for OPNsense VM
       set_fact:
-        net_dict: "{{ net_dict | combine({ 'net' ~ loop.index0|string : 'virtio,bridge=' ~ item }) }}"
+        net_dict_list: "{{ net_dict_list + [{ ('net' ~ loop.index0|string) : 'virtio,bridge=' ~ item }] }}"
       loop: "{{ vmbr_interfaces }}"
 
+    - name: Combine list into net_dict
+      set_fact:
+        net_dict: "{{ net_dict_list | combine }}"
     - name: Gather VM information from Proxmox
       shell: qm list --full 2>/dev/null | grep -o 'template-opnsense-{{ hostname }}'
       register: proxmox_vms
