@@ -335,6 +335,15 @@
 
       when: result is changed
 
+    - name: Filter out unwanted interfaces like 'lo'
+      set_fact:
+        filtered_interfaces: "{{ ansible_facts.interfaces | reject('equalto', 'lo') | list }}"
+      
+    - name: Build net dictionary for Proxmox VM
+      set_fact:
+        net_dict: "{{ net_dict | default({}) | combine({ 'net' ~ loop.index0 : 'virtio,bridge=' ~ item }) }}"
+      loop: "{{ filtered_interfaces }}"
+
     - name: Create OPNsense VM
       community.general.proxmox_kvm:
         api_user: "{{ proxmox_user }}"
@@ -345,7 +354,7 @@
         memory: 1024
         cores: 1
         sockets: 1
-        net: '{"net0": "virtio,bridge=vmbr0", "net1": "virtio,bridge=vmbr1"}'
+        net: "{{ net_dict }}"
         agent: 1
         ide: '{"ide2":"local:cloudinit"}'
         vga: qxl
