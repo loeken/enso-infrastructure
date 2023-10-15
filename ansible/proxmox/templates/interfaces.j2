@@ -36,7 +36,7 @@ iface vmbr{{ bridge_index }} inet static
 {% set bridge_index = bridge_index + 1 %}
 
 {% for interface in ansible_facts.interfaces %}
-{% if interface != 'lo' and interface != primary_interface and interface != 'vmbr0' %}
+{% if interface != 'lo' and interface != primary_interface and not interface.startswith('vmbr') %}
 # Secondary interface(s)
 auto {{ interface }}
 iface {{ interface }} inet manual
