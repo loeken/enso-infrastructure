@@ -31,6 +31,10 @@
         regexp: '^(127\.0\.1\.1)(\s+.+)$'
         line: '{{ ansible_facts.default_ipv4.address }}\2'
         backrefs: yes
+        
+    - name: Install ifupdown
+      ansible.builtin.apt:
+        name: ifupdown2
 
     - name: Gather network facts
       ansible.builtin.setup:
@@ -77,7 +81,7 @@
 
     - name: Install pve-kernel-6.2
       ansible.builtin.apt:
-        name: pve-kernel-6.2
+        name: pve-kernel-6.2 
 
     - name: Update grub file
       ansible.builtin.blockinfile:
@@ -136,7 +140,6 @@
           - proxmox-ve
           - postfix
           - open-iscsi
-          - ifupdown2
           - bridge-utils
           - pip
           - libguestfs-tools
