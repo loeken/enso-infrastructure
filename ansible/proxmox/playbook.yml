@@ -55,18 +55,18 @@
       ansible.builtin.set_fact:
         primary_interface: "{{ physical_interfaces | first }}"
 
-    - name: Display the generated network interface configuration
-      ansible.builtin.command:
-        cmd: cat /tmp/generated_interfaces
-      register: cat_output
+    # - name: Display the generated network interface configuration
+    #   ansible.builtin.command:
+    #     cmd: cat /tmp/generated_interfaces
+    #   register: cat_output
 
-    - name: Show cat_output
-      ansible.builtin.debug:
-        msg: "{{ cat_output.stdout_lines }}"
+    # - name: Show cat_output
+    #   ansible.builtin.debug:
+    #     msg: "{{ cat_output.stdout_lines }}"
 
-    - name: End playbook execution
-      ansible.builtin.meta:
-        end_play: true
+    # - name: End playbook execution
+    #   ansible.builtin.meta:
+    #     end_play: true
 
     - name: Set network interfaces
       ansible.builtin.template:
