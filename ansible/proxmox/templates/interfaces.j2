@@ -17,23 +17,6 @@ iface lo inet loopback
 {% set primary_interface = ansible_facts.default_ipv4.interface %}
 {% set bridge_index = 0 %}
 
-{% for interface in ansible_facts.interfaces %}
-{% if interface != 'lo' and interface != primary_interface and interface != 'vmbr0' %}
-auto {{ interface }}
-iface {{ interface }} inet manual
-
-auto vmbr{{ bridge_index }}
-iface vmbr{{ bridge_index }} inet manual
-    bridge-ports {{ interface }}
-    bridge-stp off
-    bridge-fd 0
-    bridge-vlan-aware yes
-    bridge-vids 2-4094
-
-{% set bridge_index = bridge_index + 1 %}
-{% endif %}
-{% endfor %}
-
 # Primary interface
 auto {{ primary_interface }}
 iface {{ primary_interface }} inet manual
@@ -49,3 +32,24 @@ iface vmbr{{ bridge_index }} inet static
     bridge-fd 0
     bridge-vlan-aware yes
     bridge-vids 2-4094
+
+{% set bridge_index = bridge_index + 1 %}
+
+{% for interface in ansible_facts.interfaces %}
+{% if interface != 'lo' and interface != primary_interface and interface != 'vmbr0' %}
+# Secondary interface(s)
+auto {{ interface }}
+iface {{ interface }} inet manual
+
+# Bridge for the secondary interface(s)
+auto vmbr{{ bridge_index }}
+iface vmbr{{ bridge_index }} inet manual
+    bridge-ports {{ interface }}
+    bridge-stp off
+    bridge-fd 0
+    bridge-vlan-aware yes
+    bridge-vids 2-4094
+
+{% set bridge_index = bridge_index + 1 %}
+{% endif %}
+{% endfor %}
