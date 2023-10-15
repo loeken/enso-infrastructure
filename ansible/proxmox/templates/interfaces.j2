@@ -14,16 +14,22 @@ source /etc/network/interfaces.d/*
 auto lo
 iface lo inet loopback
 
+{% set primary_interface = ansible_facts.default_ipv4.interface %}
+
 {% for interface in ansible_facts.interfaces %}
 {% if interface != 'lo' and interface != 'vmbr0' %}
 auto {{ interface }}
-iface {{ interface }} inet dhcp
-
-auto vmbr{{ loop.index }}
-iface vmbr{{ loop.index }} inet static
+{% if interface == primary_interface %}
+iface {{ interface }} inet static
     address {{ ansible_facts.default_ipv4.address }}
     netmask {{ ansible_facts.default_ipv4.netmask }}
     gateway {{ ansible_facts.default_ipv4.gateway }}
+{% else %}
+iface {{ interface }} inet manual
+{% endif %}
+
+auto vmbr{{ loop.index }}
+iface vmbr{{ loop.index }} inet manual
     bridge-ports {{ interface }}
     bridge-stp off
     bridge-fd 0
