@@ -13,11 +13,11 @@ iface lo inet loopback
 
 {% for iface in physical_interfaces %}
 {% set bridge_name = 'vmbr' ~ loop.index0 %}
-# {% if loop.first %}Primary{% else %}Secondary{% endif %} interface
+# {% if loop.index == 1 %}WAN{% else %}LAN{% endif %} interface
 auto {{ iface }}
 iface {{ iface }} inet manual
 
-{% if loop.first %}
+{% if loop.index == 1 %}
 # Bridge for the primary interface
 auto {{ bridge_name }}
 iface {{ bridge_name }} inet static

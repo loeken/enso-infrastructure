@@ -47,9 +47,9 @@
       ansible.builtin.set_fact:
         existing_vmbr_interfaces: "{{ ansible_facts.interfaces | select('match', '^vmbr.*') | list }}"
 
-    - name: Identify physical interfaces and sort them in reverse
+    - name: Identify physical interfaces and sort them
       ansible.builtin.set_fact:
-        physical_interfaces: "{{ ansible_facts.interfaces | reject('match', '^(lo|vmbr.*)$') | list | sort | reverse }}"
+        physical_interfaces: "{{ ansible_facts.interfaces | reject('match', '^(lo|vmbr.*)$') | list | sort }}"
 
     - name: Identify the primary interface
       ansible.builtin.set_fact:
