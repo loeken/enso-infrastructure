@@ -407,27 +407,6 @@
       delay: 10
       when: not opnsense_vm_exists
 
-    - name: Create OPNsense VM
-      community.general.proxmox_kvm:
-        api_user: "{{ proxmox_user }}"
-        api_password: "{{ root_password }}"
-        api_host: "localhost"
-        node: "{{ hostname }}"
-        name: "template-opnsense-{{ hostname }}"
-        memory: 1024
-        cores: 1
-        sockets: 1
-        net: "{{ net_dict }}"
-        agent: 1
-        ide: '{"ide2":"local:cloudinit"}'
-        vga: qxl
-        state: present
-      register: opnsense_result
-      until: opnsense_result is succeeded
-      retries: 3
-      delay: 10
-      when: not opnsense_vm_exists
-
     - block:
       - name: Download OPNsense nano image
         ansible.builtin.get_url:
