@@ -2,12 +2,7 @@
 # Please do NOT modify this file directly, unless you know what
 # you're doing.
 #
-# If you want to manage parts of the network configuration manually,
-# please utilize the 'source' or 'source-directory' directives to do
-# so.
-# PVE will preserve these directives, but will NOT read its network
-# configuration from sourced files, so do not attempt to move any of
-# the PVE managed interfaces into external files!
+# ...
 
 source /etc/network/interfaces.d/*
 
@@ -17,32 +12,21 @@ iface lo inet loopback
 {% set primary_interface = ansible_facts.default_ipv4.interface %}
 {% set bridge_index = 0 %}
 
-# Primary interface
-auto {{ primary_interface }}
-iface {{ primary_interface }} inet manual
+{% for interface in ansible_facts.interfaces %}
+{% if interface.startswith('enp') %}
 
-# Bridge for the primary interface
-auto vmbr{{ bridge_index }}
-iface vmbr{{ bridge_index }} inet static
-    address {{ ansible_facts.default_ipv4.address }}
-    netmask {{ ansible_facts.default_ipv4.netmask }}
-    gateway {{ ansible_facts.default_ipv4.gateway }}
-    bridge-ports {{ primary_interface }}
-    bridge-stp off
-    bridge-fd 0
-    bridge-vlan-aware yes
-    bridge-vids 2-4094
-
-{% set bridge_index = bridge_index + 1 %}
-
-{% for interface in ansible_facts.interfaces | reject('equalto', 'lo') | reject('equalto', primary_interface) | reject('match', '^vmbr[0-9]+$') | list %}
-# Secondary interface(s)
+# Interface {{ interface }}
 auto {{ interface }}
 iface {{ interface }} inet manual
 
-# Bridge for the secondary interface(s)
+# Bridge for interface {{ interface }}
 auto vmbr{{ bridge_index }}
-iface vmbr{{ bridge_index }} inet manual
+iface vmbr{{ bridge_index }} inet {% if bridge_index == 0 %}static{% else %}manual{% endif %}
+    {% if bridge_index == 0 %}
+    address {{ ansible_facts.default_ipv4.address }}
+    netmask {{ ansible_facts.default_ipv4.netmask }}
+    gateway {{ ansible_facts.default_ipv4.gateway }}
+    {% endif %}
     bridge-ports {{ interface }}
     bridge-stp off
     bridge-fd 0
@@ -50,4 +34,5 @@ iface vmbr{{ bridge_index }} inet manual
     bridge-vids 2-4094
 
 {% set bridge_index = bridge_index + 1 %}
+{% endif %}
 {% endfor %}

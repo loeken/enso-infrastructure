@@ -331,7 +331,6 @@
           NEWID=$(pvesh get /cluster/nextid) && \
           qm clone {{ result.vmid }} $NEWID --name template-{{ hostname }} --full true && \
           qm template $NEWID
-          # qm destroy {{ result.vmid }}
         throttle: 1
 
       when: result is changed
@@ -405,7 +404,6 @@
           NEWID=$(pvesh get /cluster/nextid) && \
           qm clone {{ opnsense_result.vmid }} $NEWID --name template-opnsense-{{ hostname }} --full true && \
           qm template $NEWID
-          # qm destroy {{ opnsense_result.vmid }}
         throttle: 1
 
       when: opnsense_result is changed
