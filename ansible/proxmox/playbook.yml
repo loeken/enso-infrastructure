@@ -273,6 +273,123 @@
       retries: 3
       delay: 10
 
+    - block:
+      - name: Download NoCloud Debian image
+        ansible.builtin.get_url:
+          url: https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-nocloud-amd64.qcow2
+          dest: /var/lib/vz/images/debian-12-nocloud-amd64.qcow2
+          mode: '0755'
+
+      - name: Import disk to local storage
+        ansible.builtin.command: qm importdisk {{ result.vmid }} /var/lib/vz/images/debian-12-nocloud-amd64.qcow2 local
+
+      - name: Attach the disk to the virtual machine
+        ansible.builtin.command: qm set {{ result.vmid }} -scsihw virtio-scsi-pci -virtio0  /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw
+
+      - name: Run commands
+        ansible.builtin.command: "{{ item }}"
+        with_items:
+          - qm set {{ result.vmid }} -serial0 socket
+          - qm set {{ result.vmid }} --ipconfig0 ip=dhcp
+          - qm set {{ result.vmid }} -boot c -bootdisk virtio0
+          - qm set {{ result.vmid }} -hotplug disk,network,usb
+          - qm set {{ result.vmid }} -vcpus 1
+
+      - name: Resize VM Disk
+        community.general.proxmox_disk:
+          api_user: "{{ proxmox_user }}"
+          api_password: "{{ root_password }}"
+          api_host: "localhost"
+          vmid: "{{ result.vmid }}"
+          disk: virtio0
+          size: 8
+          state: present
+          validate_certs: false
+          storage: local
+
+      - name: Prepare for template conversion
+        ansible.builtin.command: "{{ item }}"
+        with_items:
+          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --install cron,qemu-guest-agent,cloud-init,cloud-initramfs-growroot,open-iscsi,lsscsi,sg3-utils,multipath-tools,scsitools,nfs-common,lvm2'
+          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/multipath.conf:defaults {"'
+          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/multipath.conf:    user_friendly_names yes"'
+          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/multipath.conf:    find_multipaths yes"'
+          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/multipath.conf:}"'
+          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "systemctl enable open-iscsi.service"'
+          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "echo fs.inotify.max_user_instances=8192 >> /etc/sysctl.conf"'
+          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "echo fs.inotify.max_user_watches=524288 >> /etc/sysctl.conf"'
+
+      - name: Get next VM ID and clone VM then Convert VM to a Template
+        delegate_to: "{{ inventory_hostname }}"
+        shell: |
+          NEWID=$(pvesh get /cluster/nextid) && \
+          qm clone {{ result.vmid }} $NEWID --name template-{{ hostname }} --full true && \
+          qm template $NEWID
+        throttle: 1
+
+      when: result is changed
+
+    - name: Create OPNsense VM
+      community.general.proxmox_kvm:
+        api_user: "{{ proxmox_user }}"
+        api_password: "{{ root_password }}"
+        api_host: "localhost"
+        node: "{{ hostname }}"
+        name: "template-opnsense-{{ hostname }}"
+        memory: 1024
+        cores: 1
+        sockets: 1
+        net: '{"net0":"virtio,bridge=vmbr0"}'
+        agent: 1
+        ide: '{"ide2":"local:cloudinit"}'
+        vga: qxl
+        state: present
+      register: opnsense_result
+      until: opnsense_result is succeeded
+      retries: 3
+      delay: 10
+
+    - block:
+      - name: Download OPNsense nano image
+        ansible.builtin.get_url:
+          url: https://mirror.ams1.nl.leaseweb.net/opnsense/releases/23.7/OPNsense-23.7-nano-amd64.img.bz2
+          dest: /var/lib/vz/images/OPNsense-23.7-nano-amd64.img.bz2
+          mode: '0755'
+
+      - name: Decompress OPNsense image
+        ansible.builtin.command: bzip2 -d /var/lib/vz/images/OPNsense-23.7-nano-amd64.img.bz2
+
+      - name: Convert OPNsense image to qcow2
+        ansible.builtin.command: qemu-img convert -f raw -O qcow2 /var/lib/vz/images/OPNsense-23.7-nano-amd64.img /var/lib/vz/images/OPNsense-23.7-nano-amd64.qcow2
+
+      - name: Resize OPNsense image
+        ansible.builtin.command: qemu-img resize /var/lib/vz/images/OPNsense-23.7-nano-amd64.qcow2 +8G
+
+      - name: Import disk to local storage
+        ansible.builtin.command: qm importdisk {{ opnsense_result.vmid }} /var/lib/vz/images/OPNsense-23.7-nano-amd64.qcow2 local
+
+      - name: Attach the disk to the virtual machine
+        ansible.builtin.command: qm set {{ opnsense_result.vmid }} -scsihw virtio-scsi-pci -virtio0 /var/lib/vz/images/{{ opnsense_result.vmid }}/vm-{{ opnsense_result.vmid }}-disk-0.raw
+
+      - name: Run additional commands for OPNsense VM
+        ansible.builtin.command: "{{ item }}"
+        with_items:
+          - qm set {{ opnsense_result.vmid }} -serial0 socket
+          - qm set {{ opnsense_result.vmid }} -boot c -bootdisk virtio0
+          - qm set {{ opnsense_result.vmid }} -hotplug disk,network,usb
+          - qm set {{ opnsense_result.vmid }} -vcpus 1
+
+      - name: Get next VM ID for OPNsense and clone VM then Convert VM to a Template
+        delegate_to: "{{ inventory_hostname }}"
+        shell: |
+          NEWID=$(pvesh get /cluster/nextid) && \
+          qm clone {{ opnsense_result.vmid }} $NEWID --name template-opnsense-{{ hostname }} --full true && \
+          qm template $NEWID
+        throttle: 1
+
+      when: opnsense_result is changed
+
+
     - name: Partition disk and setup NFS server
       block:
         - name: Gather facts
@@ -348,62 +465,6 @@
           become: true
           when: changedexports.changed
       when: is_master == 'yes'
-
-    - block:
-      - name: Download NoCloud Debian image
-        ansible.builtin.get_url:
-          url: https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-nocloud-amd64.qcow2
-          dest: /var/lib/vz/images/debian-12-nocloud-amd64.qcow2
-          mode: '0755'
-
-      - name: Import disk to local storage
-        ansible.builtin.command: qm importdisk {{ result.vmid }} /var/lib/vz/images/debian-12-nocloud-amd64.qcow2 local
-
-      - name: Attach the disk to the virtual machine
-        ansible.builtin.command: qm set {{ result.vmid }} -scsihw virtio-scsi-pci -virtio0  /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw
-
-      - name: Run commands
-        ansible.builtin.command: "{{ item }}"
-        with_items:
-          - qm set {{ result.vmid }} -serial0 socket
-          - qm set {{ result.vmid }} --ipconfig0 ip=dhcp
-          - qm set {{ result.vmid }} -boot c -bootdisk virtio0
-          - qm set {{ result.vmid }} -hotplug disk,network,usb
-          - qm set {{ result.vmid }} -vcpus 1
-
-      - name: Resize VM Disk
-        community.general.proxmox_disk:
-          api_user: "{{ proxmox_user }}"
-          api_password: "{{ root_password }}"
-          api_host: "localhost"
-          vmid: "{{ result.vmid }}"
-          disk: virtio0
-          size: 8
-          state: present
-          validate_certs: false
-          storage: local
-
-      - name: Prepare for template conversion
-        ansible.builtin.command: "{{ item }}"
-        with_items:
-          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --install cron,qemu-guest-agent,cloud-init,cloud-initramfs-growroot,open-iscsi,lsscsi,sg3-utils,multipath-tools,scsitools,nfs-common,lvm2'
-          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/multipath.conf:defaults {"'
-          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/multipath.conf:    user_friendly_names yes"'
-          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/multipath.conf:    find_multipaths yes"'
-          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/multipath.conf:}"'
-          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "systemctl enable open-iscsi.service"'
-          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "echo fs.inotify.max_user_instances=8192 >> /etc/sysctl.conf"'
-          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "echo fs.inotify.max_user_watches=524288 >> /etc/sysctl.conf"'
-
-      - name: Get next VM ID and clone VM then Convert VM to a Template
-        delegate_to: "{{ inventory_hostname }}"
-        shell: |
-          NEWID=$(pvesh get /cluster/nextid) && \
-          qm clone {{ result.vmid }} $NEWID --name template-{{ hostname }} --full true && \
-          qm template $NEWID
-        throttle: 1
-
-      when: result is changed
 
     - name: Get current hostname
       ansible.builtin.command: hostname
