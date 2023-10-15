@@ -30,27 +30,27 @@
         path: /etc/hosts
         regexp: '^(127\.0\.1\.1)(\s+.+)$'
         line: '{{ ansible_facts.default_ipv4.address }}\2'
-        backrefs: yes
-        
+        backrefs: true
+
     - name: Install ifupdown
       ansible.builtin.apt:
         name: ifupdown2
 
     - name: Gather facts
-      setup:
+      ansible.builtin.setup:
         gather_subset:
           - network
 
     - name: Identify existing vmbr* interfaces
-      set_fact:
+      ansible.builtin.set_fact:
         existing_vmbr_interfaces: "{{ ansible_facts.interfaces | select('match', '^vmbr.*') | list }}"
 
     - name: Identify physical interfaces and sort them
-      set_fact:
+      ansible.builtin.set_fact:
         physical_interfaces: "{{ ansible_facts.interfaces | reject('match', '^(lo|vmbr.*)$') | list | sort }}"
 
     - name: Identify the primary interface
-      set_fact:
+      ansible.builtin.set_fact:
         primary_interface: "{{ physical_interfaces | first }}"
 
 
@@ -94,7 +94,7 @@
 
     - name: Install pve-kernel-6.2
       ansible.builtin.apt:
-        name: pve-kernel-6.2 
+        name: pve-kernel-6.2
 
     - name: Update grub file
       ansible.builtin.blockinfile:
@@ -229,7 +229,7 @@
       when: is_master != 'yes'
 
     - name: Add the public key to authorized keys on master
-      ansible.builtin.authorized_key:
+      ansible.posix.authorized_key:
         user: root
         state: present
         key: "{{ lookup('file', '/tmp/id_rsa.pub') }}"
@@ -273,13 +273,13 @@
       when: corosync_status.failed
 
     - name: Gather VM information for template-vm
-      shell: qm list --full 2>/dev/null | grep -o 'template-{{ hostname }}'
+      ansible.builtin.shell: qm list --full 2>/dev/null | grep -o 'template-{{ hostname }}'
       register: proxmox_template_vm
       ignore_errors: true
 
     - name: Check if VM with name template-{{ hostname }} exists
-      set_fact:
-        template_vm_exists: "{{ proxmox_template_vm.stdout_lines|length > 0 }}"
+      ansible.builtin.set_fact:
+        template_vm_exists: "{{ proxmox_template_vm.stdout_lines | length > 0 }}"
 
     - name: Create VM
       community.general.proxmox_kvm:
@@ -354,34 +354,58 @@
           NEWID=$(pvesh get /cluster/nextid) && \
           qm clone {{ result.vmid }} $NEWID --name template-{{ hostname }} --full true && \
           qm template $NEWID
+          qm destroy {{ result.vmid }}
         throttle: 1
-
       when: result is changed
 
-    - name: Select only vmbr* interfaces
-      set_fact:
-        vmbr_interfaces: "{{ ansible_facts.interfaces | select('match', '^vmbr[0-9]+$') | list }}"
-
-    - name: Initialize empty net_dict_list
-      set_fact:
-        net_dict_list: []
-
-    - name: Build net dictionary list for OPNsense VM
-      set_fact:
-        net_dict_list: "{{ net_dict_list + [{ ('net' ~ loop.index0|string) : 'virtio,bridge=' ~ item }] }}"
-      loop: "{{ vmbr_interfaces }}"
-
-    - name: Combine list into net_dict
-      set_fact:
-        net_dict: "{{ net_dict_list | combine }}"
     - name: Gather VM information from Proxmox
-      shell: qm list --full 2>/dev/null | grep -o 'template-opnsense-{{ hostname }}'
+      ansible.builtin.shell: qm list --full 2>/dev/null | grep -o 'template-opnsense-{{ hostname }}'
       register: proxmox_vms
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Check if OPNsense VM with name template-opnsense-{{ hostname }} exists
-      set_fact:
-        opnsense_vm_exists: "{{ proxmox_vms.stdout_lines|length > 0 }}"
+      ansible.builtin.set_fact:
+        opnsense_vm_exists: "{{ proxmox_vms.stdout_lines | length > 0 }}"
+
+    - name: Select only vmbr* interfaces
+      ansible.builtin.set_fact:
+        vmbr_interfaces: "{{ ansible_facts.interfaces | select('match', '^vmbr[0-9]+$') | list }}"
+
+    - name: Initialize empty net_dict
+      ansible.builtin.set_fact:
+        net_dict: {}
+
+    - name: Fail if vmbr_interfaces is not defined
+      ansible.builtin.fail:
+        msg: "vmbr_interfaces is not defined"
+      when: vmbr_interfaces is undefined or vmbr_interfaces | length == 0
+
+    - name: Build net dictionary for OPNsense VM (simplified)
+      ansible.builtin.set_fact:
+        net_dict: "{{ net_dict | combine({ 'net' ~ item.0|string : 'virtio,bridge=' ~ item.1 }) }}"
+      with_indexed_items: "{{ vmbr_interfaces }}"
+      when: vmbr_interfaces is defined and vmbr_interfaces | length > 0
+
+    - name: Create OPNsense VM
+      community.general.proxmox_kvm:
+        api_user: "{{ proxmox_user }}"
+        api_password: "{{ root_password }}"
+        api_host: "localhost"
+        node: "{{ hostname }}"
+        name: "template-opnsense-{{ hostname }}"
+        memory: 1024
+        cores: 1
+        sockets: 1
+        net: "{{ net_dict }}"
+        agent: 1
+        ide: '{"ide2":"local:cloudinit"}'
+        vga: qxl
+        state: present
+      register: opnsense_result
+      until: opnsense_result is succeeded
+      retries: 3
+      delay: 10
+      when: not opnsense_vm_exists
 
     - name: Create OPNsense VM
       community.general.proxmox_kvm:
@@ -410,6 +434,17 @@
           url: https://mirror.ams1.nl.leaseweb.net/opnsense/releases/23.7/OPNsense-23.7-nano-amd64.img.bz2
           dest: /var/lib/vz/images/OPNsense-23.7-nano-amd64.img.bz2
           mode: '0755'
+
+      - name: Check if decompressed OPNsense image already exists
+        ansible.builtin.stat:
+          path: /var/lib/vz/images/OPNsense-23.7-nano-amd64.img
+        register: decompressed_img_stat
+
+      - name: Remove existing decompressed OPNsense image
+        ansible.builtin.file:
+          path: /var/lib/vz/images/OPNsense-23.7-nano-amd64.img
+          state: absent
+        when: decompressed_img_stat.stat.exists
 
       - name: Decompress OPNsense image
         ansible.builtin.command: bzip2 -d /var/lib/vz/images/OPNsense-23.7-nano-amd64.img.bz2
@@ -440,6 +475,7 @@
           NEWID=$(pvesh get /cluster/nextid) && \
           qm clone {{ opnsense_result.vmid }} $NEWID --name template-opnsense-{{ hostname }} --full true && \
           qm template $NEWID
+          qm destroy {{ opnsense_result.vmid }}
         throttle: 1
 
       when: opnsense_result is changed
