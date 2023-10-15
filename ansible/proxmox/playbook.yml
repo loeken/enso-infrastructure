@@ -272,16 +272,14 @@
         msg: "Corosync service is not active"
       when: corosync_status.failed
 
-    - name: Gather facts from Proxmox
-      community.general.proxmox_facts:
-        api_user: "{{ proxmox_user }}"
-        api_password: "{{ root_password }}"
-        api_host: "localhost"
-      register: proxmox_facts
+    - name: Gather VM information for template-vm
+      shell: qm list --full 2>/dev/null | grep -o 'template-{{ hostname }}'
+      register: proxmox_template_vm
+      ignore_errors: true
 
     - name: Check if VM with name template-{{ hostname }} exists
       set_fact:
-        vm_exists: "{{ (proxmox_facts.ansible_facts.proxmox | selectattr('name', 'defined') | map(attribute='name') | list) | intersect(['template-' + hostname]) | length > 0 }}"
+        template_vm_exists: "{{ proxmox_template_vm.stdout_lines|length > 0 }}"
 
     - name: Create VM
       community.general.proxmox_kvm:
@@ -302,7 +300,7 @@
       until: result is succeeded
       retries: 3
       delay: 10
-      when: not vm_exists
+      when: not template_vm_exists
 
     - block:
       - name: Download NoCloud Debian image
@@ -373,16 +371,14 @@
         net_dict: "{{ net_dict | combine({ 'net' ~ loop.index0|string : 'virtio,bridge=' ~ item }) }}"
       loop: "{{ vmbr_interfaces }}"
 
-    - name: Gather facts from Proxmox
-      community.general.proxmox_facts:
-        api_user: "{{ proxmox_user }}"
-        api_password: "{{ root_password }}"
-        api_host: "localhost"
-      register: proxmox_facts
+    - name: Gather VM information from Proxmox
+      shell: qm list --full 2>/dev/null | grep -o 'template-opnsense-{{ hostname }}'
+      register: proxmox_vms
+      ignore_errors: yes
 
-    - name: Check if OPNsense VM with name template-{{ hostname }} exists
+    - name: Check if OPNsense VM with name template-opnsense-{{ hostname }} exists
       set_fact:
-        opnsense_vm_exists: "{{ (proxmox_facts.ansible_facts.proxmox | selectattr('name', 'defined') | map(attribute='name') | list) | intersect(['template-' + hostname]) | length > 0 }}"
+        opnsense_vm_exists: "{{ proxmox_vms.stdout_lines|length > 0 }}"
 
     - name: Create OPNsense VM
       community.general.proxmox_kvm:
