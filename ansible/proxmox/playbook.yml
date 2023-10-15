@@ -45,6 +45,11 @@
         dest: "{{ proxmox_gpg }}"
         mode: '0644'
 
+    - name: Remove PVE enterprise list
+      ansible.builtin.file:
+        path: "{{ pve_enterprise_list }}"
+        state: absent
+
     - name: Update APT
       ansible.builtin.apt:
         update_cache: true
