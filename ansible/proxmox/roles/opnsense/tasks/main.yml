@@ -32,6 +32,10 @@
   with_indexed_items: "{{ vmbr_interfaces }}"
   when: vmbr_interfaces is defined and vmbr_interfaces | length > 0
 
+- name: debug
+  debug:
+    msg: "{{ net_dict }}"
+
 - name: Create OPNsense VM
   community.general.proxmox_kvm:
     api_user: "{{ proxmox_user }}"
@@ -54,16 +58,17 @@
   when: not opnsense_vm_exists
 
 - block:
+  - name: Check if decompressed OPNsense image already exists
+    ansible.builtin.stat:
+      path: /var/lib/vz/images/OPNsense-23.7-nano-amd64.img
+    register: decompressed_img_stat
+
   - name: Download OPNsense nano image
     ansible.builtin.get_url:
       url: https://mirror.ams1.nl.leaseweb.net/opnsense/releases/23.7/OPNsense-23.7-nano-amd64.img.bz2
       dest: /var/lib/vz/images/OPNsense-23.7-nano-amd64.img.bz2
       mode: '0755'
-
-  - name: Check if decompressed OPNsense image already exists
-    ansible.builtin.stat:
-      path: /var/lib/vz/images/OPNsense-23.7-nano-amd64.img
-    register: decompressed_img_stat
+    when: not decompressed_img_stat.stat.exists
 
   - name: Decompress OPNsense image
     ansible.builtin.command: bzip2 -d /var/lib/vz/images/OPNsense-23.7-nano-amd64.img.bz2
@@ -84,7 +89,7 @@
   - name: filepath
     file:
       path: /tmp/opnsense_config/conf
-      state: present
+      state: directory
 
   - name: Upload config.xml to Proxmox host 
     copy:

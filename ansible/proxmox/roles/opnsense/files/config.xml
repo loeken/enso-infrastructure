@@ -250,12 +250,20 @@
       <port>22</port>
       <username>root</username>
       <password>opnsense</password>
-      <authkeys></authkeys>
+      <authkeys/>
       <sshdkeyonly>disabled</sshdkeyonly>
-      <sshdkeyonlyuser></sshdkeyonlyuser>
-      <permitrootlogin>enabled</permitrootlogin>
-      <passwordauth>enabled</passwordauth>
+      <sshdkeyonlyuser/>
+      <permitrootlogin>1</permitrootlogin>
+      <passwordauth>1</passwordauth>
       <tcpfwding>enabled</tcpfwding>
+      <noauto>1</noauto>
+      <interfaces>lan</interfaces>
+      <kex/>
+      <ciphers/>
+      <macs/>
+      <keys/>
+      <keysig/>
+      <enabled>enabled</enabled>
     </ssh>
     <rrdbackup>-1</rrdbackup>
     <netflowbackup>-1</netflowbackup>
