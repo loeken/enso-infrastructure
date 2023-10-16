@@ -127,21 +127,19 @@
       vmid: "{{ new_vm_id.stdout }}"
       state: started
       onboot: true
-
-  - name: Wait for OPNsense VM to be accessible
-    ansible.builtin.wait_for:
-      host: "192.168.1.1"
-      port: 80  # Change this to the port used for SSH or management
-      timeout: 600  # Change this to an appropriate timeout value in seconds
-  
-  - name: Installing os-api-backup package on OPNsense
-    ansibleguy.opnsense.package:
-      name: ['os-api-backup', 'os-adguardhome-maxit', 'os-sensei, 'os-sensei-updater', 'os-sunnyvalley']
-      action: 'install'
-    vars:
-      ansible_host: "192.168.1.1"
-      ansible_user: "root"
-      ansible_ssh_pass: "opnsense"
-
   when: opnsense_result is changed
 ## OPNSENSE SECTION END
+- name: Wait for OPNsense VM to be accessible
+  ansible.builtin.wait_for:
+    host: "192.168.1.1"
+    port: 80  # Change this to the port used for SSH or management
+    timeout: 600  # Change this to an appropriate timeout value in seconds
+
+- name: Installing os-api-backup package on OPNsense
+  ansibleguy.opnsense.package:
+    name: ['os-api-backup', 'os-adguardhome-maxit', 'os-sensei', 'os-sensei-updater', 'os-sunnyvalley']
+    action: 'install'
+  vars:
+    ansible_host: "192.168.1.1"
+    ansible_user: "root"
+    ansible_ssh_pass: "opnsense"
