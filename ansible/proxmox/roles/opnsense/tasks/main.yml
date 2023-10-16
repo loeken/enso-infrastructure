@@ -81,13 +81,6 @@
   - name: Attach the disk to the virtual machine
     ansible.builtin.command: qm set {{ opnsense_result.vmid }} -scsihw virtio-scsi-pci -virtio0 /var/lib/vz/images/{{ opnsense_result.vmid }}/vm-{{ opnsense_result.vmid }}-disk-0.raw
 
-  - name: Run additional commands for OPNsense VM
-    ansible.builtin.command: "{{ item }}"
-    with_items:
-      - qm set {{ opnsense_result.vmid }} -serial0 socket
-      - qm set {{ opnsense_result.vmid }} -boot c -bootdisk virtio0
-      - qm set {{ opnsense_result.vmid }} -hotplug disk,network,usb
-      - qm set {{ opnsense_result.vmid }} -vcpus 1
   - name: Upload config.xml to Proxmox host 
     copy:
       src: files/config.xml
@@ -96,15 +89,28 @@
       group: root
       mode: '0644'
 
-  - name: Use virt-customize to inject config.xml into OPNsense VM disk image
+  - name: Create ISO containing config.xml
     command:
-      cmd: "virt-customize -a /var/lib/vz/images/{{ opnsense_result.vmid }}/vm-{{ opnsense_result.vmid }}-disk-0.raw --upload /tmp/config.xml:/conf/config.xml"
+      cmd: mkisofs -o /var/lib/vz/images/opnsense_config.iso /tmp/config.xml
+    become: true
+
+  - name: Attach the ISO as a CD-ROM to the virtual machine
+    ansible.builtin.command: qm set {{ opnsense_result.vmid }} -cdrom /var/lib/vz/images/opnsense_config.iso
     become: true
 
   - name: Remove temporary config.xml from Proxmox host
     file:
       path: /tmp/config.xml
       state: absent
+
+
+  - name: Run additional commands for OPNsense VM
+    ansible.builtin.command: "{{ item }}"
+    with_items:
+      - qm set {{ opnsense_result.vmid }} -serial0 socket
+      - qm set {{ opnsense_result.vmid }} -boot c -bootdisk virtio0
+      - qm set {{ opnsense_result.vmid }} -hotplug disk,network,usb
+      - qm set {{ opnsense_result.vmid }} -vcpus 1
 
   - name: Get next VM ID for OPNsense and clone VM then Convert VM to a Template
     delegate_to: "{{ inventory_hostname }}"
@@ -145,6 +151,7 @@
       vmid: "{{ new_vm_id.stdout }}"
       state: started
       onboot: true
+
   when: opnsense_result is changed
 ## OPNSENSE SECTION END
 - name: Wait for OPNsense VM to be accessible
