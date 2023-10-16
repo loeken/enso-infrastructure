@@ -96,6 +96,7 @@
       qm clone {{ opnsense_result.vmid }} $NEWID --name template-opnsense-{{ hostname }} --full true && \
       qm template $NEWID
       qm destroy {{ opnsense_result.vmid }}
+      sleep 5
     throttle: 1
 
   - name: Get next VM ID for new OPNsense VM
