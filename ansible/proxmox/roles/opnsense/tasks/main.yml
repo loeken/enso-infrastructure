@@ -118,5 +118,26 @@
       state: started
       onboot: true
     register: new_opnsense_vm
+
+  - name: Wait for OPNsense VM to be accessible
+    ansible.builtin.wait_for:
+      host: "192.168.1.1"
+      port: 22  # Change this to the port used for SSH or management
+      timeout: 600  # Change this to an appropriate timeout value in seconds
+    delegate_to: localhost
+
+  - name: Set OPNsense host credentials
+    add_host:
+      name: "192.168.1.1"
+      groups: opnsense_group
+      ansible_user: root
+      ansible_password: opnsense
+
+  - name: Installing 'os-api-backup' package on OPNsense
+    ansibleguy.opnsense.package:
+      name: 'os-api-backup'
+      action: 'install'
+    delegate_to: "192.168.1.1"
+
   when: opnsense_result is changed
 ## OPNSENSE SECTION END
