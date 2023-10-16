@@ -99,6 +99,14 @@
       group: root
       mode: '0644'
 
+  - name: Upload setup.sh to Proxmox host 
+    copy:
+      src: files/setup.sh
+      dest: /tmp/opnsense_config/setup.sh
+      owner: root
+      group: root
+      mode: '0777'
+
   - name: Create ISO containing config.xml
     command:
       cmd: mkisofs -o /var/lib/vz/template/iso/opnsense_config.iso /tmp/opnsense_config
