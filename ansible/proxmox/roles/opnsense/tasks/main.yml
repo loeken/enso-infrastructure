@@ -131,7 +131,7 @@
   - name: Wait for OPNsense VM to be accessible
     ansible.builtin.wait_for:
       host: "192.168.1.1"
-      port: 22  # Change this to the port used for SSH or management
+      port: 80  # Change this to the port used for SSH or management
       timeout: 600  # Change this to an appropriate timeout value in seconds
   
   - name: Installing os-api-backup package on OPNsense
