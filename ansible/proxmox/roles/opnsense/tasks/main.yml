@@ -84,18 +84,18 @@
   - name: Upload config.xml to Proxmox host 
     copy:
       src: files/config.xml
-      dest: /tmp/config.xml
+      dest: /tmp/opnsense_config/conf/config.xml
       owner: root
       group: root
       mode: '0644'
 
   - name: Create ISO containing config.xml
     command:
-      cmd: mkisofs -o /var/lib/vz/images/opnsense_config.iso /tmp/config.xml
+      cmd: mkisofs -o /var/lib/vz/template/iso/opnsense_config.iso /tmp/opnsense_config
     become: true
 
   - name: Attach the ISO as a CD-ROM to the virtual machine
-    ansible.builtin.command: qm set {{ opnsense_result.vmid }} -cdrom /var/lib/vz/images/opnsense_config.iso
+    ansible.builtin.command: qm set {{ opnsense_result.vmid }} -cdrom /var/lib/vz/template/iso/opnsense_config.iso
     become: true
 
   - name: Remove temporary config.xml from Proxmox host
