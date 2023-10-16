@@ -8,6 +8,11 @@
   ansible.builtin.set_fact:
     opnsense_vm_exists: "{{ proxmox_vms.stdout_lines | length > 0 }}"
 
+- name: Gather facts
+  ansible.builtin.setup:
+    gather_subset:
+      - network
+
 - name: Select only vmbr* interfaces
   ansible.builtin.set_fact:
     vmbr_interfaces: "{{ ansible_facts.interfaces | select('match', '^vmbr[0-9]+$') | list }}"
