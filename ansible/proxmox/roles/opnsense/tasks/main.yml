@@ -136,7 +136,7 @@
   
   - name: Installing os-api-backup package on OPNsense
     ansibleguy.opnsense.package:
-      name: 'os-api-backup'
+      name: ['os-api-backup', 'os-adguardhome-maxit', 'os-sensei, 'os-sensei-updater', 'os-sunnyvalley']
       action: 'install'
     vars:
       ansible_host: "192.168.1.1"
