@@ -98,5 +98,24 @@
       qm destroy {{ opnsense_result.vmid }}
     throttle: 1
 
+  - name: Get next VM ID for new OPNsense VM
+    delegate_to: "{{ inventory_hostname }}"
+    shell: pvesh get /cluster/nextid
+    register: new_vm_id
+
+  - name: Create OPNsense VM from template
+    community.general.proxmox_kvm:
+      api_user: "{{ proxmox_user }}"
+      api_password: "{{ root_password }}"
+      api_host: "localhost"
+      node: "{{ hostname }}"
+      name: "opnsense"
+      clone: "template-opnsense-{{ hostname }}"
+      newid: "{{ new_vm_id.stdout }}"
+      memory: 2048  # You can adjust memory, cores, and other parameters as per your needs.
+      cores: 2
+      sockets: 1
+      state: present
+    register: new_opnsense_vm
   when: opnsense_result is changed
 ## OPNSENSE SECTION END
