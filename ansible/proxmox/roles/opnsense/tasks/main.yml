@@ -88,7 +88,23 @@
       - qm set {{ opnsense_result.vmid }} -boot c -bootdisk virtio0
       - qm set {{ opnsense_result.vmid }} -hotplug disk,network,usb
       - qm set {{ opnsense_result.vmid }} -vcpus 1
+  - name: Upload config.xml to Proxmox host 
+    copy:
+      src: files/config.xml
+      dest: /tmp/config.xml
+      owner: root
+      group: root
+      mode: '0644'
 
+  - name: Use virt-customize to inject config.xml into OPNsense VM disk image
+    command:
+      cmd: "virt-customize -a /var/lib/vz/images/{{ opnsense_result.vmid }}/vm-{{ opnsense_result.vmid }}-disk-0.raw --upload /tmp/config.xml:/conf/config.xml"
+    become: true
+
+    - name: Remove temporary config.xml from Proxmox host
+      file:
+        path: /tmp/config.xml
+        state: absent
   - name: Get next VM ID for OPNsense and clone VM then Convert VM to a Template
     delegate_to: "{{ inventory_hostname }}"
     shell: |
