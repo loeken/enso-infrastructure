@@ -55,19 +55,6 @@
       ansible.builtin.set_fact:
         primary_interface: "{{ physical_interfaces | first }}"
 
-    # - name: Display the generated network interface configuration
-    #   ansible.builtin.command:
-    #     cmd: cat /tmp/generated_interfaces
-    #   register: cat_output
-
-    # - name: Show cat_output
-    #   ansible.builtin.debug:
-    #     msg: "{{ cat_output.stdout_lines }}"
-
-    # - name: End playbook execution
-    #   ansible.builtin.meta:
-    #     end_play: true
-
     - name: Set network interfaces
       ansible.builtin.template:
         src: templates/interfaces.j2
@@ -284,7 +271,8 @@
       ansible.builtin.fail:
         msg: "Corosync service is not active"
       when: corosync_status.failed
-
+    
+    ## DEBIAN SECTION START
     - name: Gather VM information for template-vm
       ansible.builtin.shell: qm list --full 2>/dev/null | grep -o 'template-{{ hostname }}'
       register: proxmox_template_vm
@@ -371,108 +359,13 @@
         throttle: 1
       when: result is changed
 
-    - name: Gather VM information from Proxmox
-      ansible.builtin.shell: qm list --full 2>/dev/null | grep -o 'template-opnsense-{{ hostname }}'
-      register: proxmox_vms
-      ignore_errors: true
-
-    - name: Check if OPNsense VM with name template-opnsense-{{ hostname }} exists
-      ansible.builtin.set_fact:
-        opnsense_vm_exists: "{{ proxmox_vms.stdout_lines | length > 0 }}"
-
-    - name: Select only vmbr* interfaces
-      ansible.builtin.set_fact:
-        vmbr_interfaces: "{{ ansible_facts.interfaces | select('match', '^vmbr[0-9]+$') | list }}"
-
-    - name: Initialize empty net_dict
-      ansible.builtin.set_fact:
-        net_dict: {}
-
-    - name: Fail if vmbr_interfaces is not defined
-      ansible.builtin.fail:
-        msg: "vmbr_interfaces is not defined"
-      when: vmbr_interfaces is undefined or vmbr_interfaces | length == 0
-
-    - name: Build net dictionary for OPNsense VM (simplified)
-      ansible.builtin.set_fact:
-        net_dict: "{{ net_dict | combine({ 'net' ~ item.0|string : 'virtio,bridge=' ~ item.1 }) }}"
-      with_indexed_items: "{{ vmbr_interfaces }}"
-      when: vmbr_interfaces is defined and vmbr_interfaces | length > 0
-
-    - name: Create OPNsense VM
-      community.general.proxmox_kvm:
-        api_user: "{{ proxmox_user }}"
-        api_password: "{{ root_password }}"
-        api_host: "localhost"
-        node: "{{ hostname }}"
-        name: "template-opnsense-{{ hostname }}"
-        memory: 1024
-        cores: 1
-        sockets: 1
-        net: "{{ net_dict }}"
-        agent: 1
-        ide: '{"ide2":"local:cloudinit"}'
-        vga: qxl
-        state: present
-      register: opnsense_result
-      until: opnsense_result is succeeded
-      retries: 3
-      delay: 10
-      when: not opnsense_vm_exists
-
-    - block:
-      - name: Download OPNsense nano image
-        ansible.builtin.get_url:
-          url: https://mirror.ams1.nl.leaseweb.net/opnsense/releases/23.7/OPNsense-23.7-nano-amd64.img.bz2
-          dest: /var/lib/vz/images/OPNsense-23.7-nano-amd64.img.bz2
-          mode: '0755'
-
-      - name: Check if decompressed OPNsense image already exists
-        ansible.builtin.stat:
-          path: /var/lib/vz/images/OPNsense-23.7-nano-amd64.img
-        register: decompressed_img_stat
-
-      - name: Remove existing decompressed OPNsense image
-        ansible.builtin.file:
-          path: /var/lib/vz/images/OPNsense-23.7-nano-amd64.img
-          state: absent
-        when: decompressed_img_stat.stat.exists
-
-      - name: Decompress OPNsense image
-        ansible.builtin.command: bzip2 -d /var/lib/vz/images/OPNsense-23.7-nano-amd64.img.bz2
-
-      - name: Convert OPNsense image to qcow2
-        ansible.builtin.command: qemu-img convert -f raw -O qcow2 /var/lib/vz/images/OPNsense-23.7-nano-amd64.img /var/lib/vz/images/OPNsense-23.7-nano-amd64.qcow2
-
-      - name: Resize OPNsense image
-        ansible.builtin.command: qemu-img resize /var/lib/vz/images/OPNsense-23.7-nano-amd64.qcow2 +8G
-
-      - name: Import disk to local storage
-        ansible.builtin.command: qm importdisk {{ opnsense_result.vmid }} /var/lib/vz/images/OPNsense-23.7-nano-amd64.qcow2 local
-
-      - name: Attach the disk to the virtual machine
-        ansible.builtin.command: qm set {{ opnsense_result.vmid }} -scsihw virtio-scsi-pci -virtio0 /var/lib/vz/images/{{ opnsense_result.vmid }}/vm-{{ opnsense_result.vmid }}-disk-0.raw
-
-      - name: Run additional commands for OPNsense VM
-        ansible.builtin.command: "{{ item }}"
-        with_items:
-          - qm set {{ opnsense_result.vmid }} -serial0 socket
-          - qm set {{ opnsense_result.vmid }} -boot c -bootdisk virtio0
-          - qm set {{ opnsense_result.vmid }} -hotplug disk,network,usb
-          - qm set {{ opnsense_result.vmid }} -vcpus 1
-
-      - name: Get next VM ID for OPNsense and clone VM then Convert VM to a Template
-        delegate_to: "{{ inventory_hostname }}"
-        shell: |
-          NEWID=$(pvesh get /cluster/nextid) && \
-          qm clone {{ opnsense_result.vmid }} $NEWID --name template-opnsense-{{ hostname }} --full true && \
-          qm template $NEWID
-          qm destroy {{ opnsense_result.vmid }}
-        throttle: 1
-
-      when: opnsense_result is changed
-
-
+    ## DEBIAN SECTION END
+    ## OPNSENSE SECTION START
+    - name: include opnsense
+      roles:
+        - role: opnsense
+      when: create_opnsense == true
+    ## OPNSENSE SECTION END
     - name: Partition disk and setup NFS server
       block:
         - name: Gather facts
