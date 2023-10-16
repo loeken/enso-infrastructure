@@ -65,14 +65,9 @@
       path: /var/lib/vz/images/OPNsense-23.7-nano-amd64.img
     register: decompressed_img_stat
 
-  - name: Remove existing decompressed OPNsense image
-    ansible.builtin.file:
-      path: /var/lib/vz/images/OPNsense-23.7-nano-amd64.img
-      state: absent
-    when: decompressed_img_stat.stat.exists
-
   - name: Decompress OPNsense image
     ansible.builtin.command: bzip2 -d /var/lib/vz/images/OPNsense-23.7-nano-amd64.img.bz2
+    when: not decompressed_img_stat.stat.exists
 
   - name: Convert OPNsense image to qcow2
     ansible.builtin.command: qemu-img convert -f raw -O qcow2 /var/lib/vz/images/OPNsense-23.7-nano-amd64.img /var/lib/vz/images/OPNsense-23.7-nano-amd64.qcow2
