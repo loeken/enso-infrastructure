@@ -115,7 +115,8 @@
       memory: 2048  # You can adjust memory, cores, and other parameters as per your needs.
       cores: 2
       sockets: 1
-      state: present
+      state: started
+      onboot: true
     register: new_opnsense_vm
   when: opnsense_result is changed
 ## OPNSENSE SECTION END
