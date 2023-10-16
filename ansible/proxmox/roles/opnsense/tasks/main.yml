@@ -101,10 +101,11 @@
       cmd: "virt-customize -a /var/lib/vz/images/{{ opnsense_result.vmid }}/vm-{{ opnsense_result.vmid }}-disk-0.raw --upload /tmp/config.xml:/conf/config.xml"
     become: true
 
-    - name: Remove temporary config.xml from Proxmox host
-      file:
-        path: /tmp/config.xml
-        state: absent
+  - name: Remove temporary config.xml from Proxmox host
+    file:
+      path: /tmp/config.xml
+      state: absent
+
   - name: Get next VM ID for OPNsense and clone VM then Convert VM to a Template
     delegate_to: "{{ inventory_hostname }}"
     shell: |
