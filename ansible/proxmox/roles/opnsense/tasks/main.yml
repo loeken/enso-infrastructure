@@ -15,7 +15,7 @@
 
 - name: Select only vmbr* interfaces
   ansible.builtin.set_fact:
-    vmbr_interfaces: "{{ ansible_facts.interfaces | select('match', '^vmbr[0-9]+$') | list }}"
+    vmbr_interfaces: "{{ ansible_facts.interfaces | select('match', '^vmbr[0-9]+$') | list | sort }}"
 
 - name: Initialize empty net_dict
   ansible.builtin.set_fact:
@@ -183,24 +183,15 @@
       - "####################################################"
 
 - name: Wait for OPNsense VM to become inaccessible (start of reboot)
-  ansible.builtin.wait_for:
-    host: "192.168.1.1"
-    port: 80  # Change this to the port used for SSH or management
-    state: "stopped"  # Waits for the condition when the port is no longer accessible
-    timeout: 600  # Change this to an appropriate timeout value in seconds
+  wait_for:
+    host: '192.168.1.1'
+    port: 80
+    state: 'stopped'
+    timeout: 300
 
 - name: Wait for OPNsense VM to be accessible again (after reboot)
-  ansible.builtin.wait_for:
-    host: "192.168.1.1"
-    port: 80  # Change this to the port used for SSH or management
-    timeout: 600  # Change this to an appropriate timeout value in seconds
-
-- name: Installing os-api-backup package on OPNsense
-  ansibleguy.opnsense.package:
-    name: ['os-api-backup', 'os-adguardhome-maxit', 'os-sensei', 'os-sensei-updater', 'os-sunnyvalley']
-    action: 'install'
-  vars:
-    ansible_host: "192.168.1.1"
-    ansible_user: "root"
-    ansible_ssh_pass: "opnsense"
-    ansible_ssh_port: "22"
+  wait_for:
+    host: '192.168.1.1'
+    port: 80
+    state: 'started'
+    timeout: 300
