@@ -81,6 +81,11 @@
   - name: Attach the disk to the virtual machine
     ansible.builtin.command: qm set {{ opnsense_result.vmid }} -scsihw virtio-scsi-pci -virtio0 /var/lib/vz/images/{{ opnsense_result.vmid }}/vm-{{ opnsense_result.vmid }}-disk-0.raw
 
+  - name: filepath
+    file:
+      path: /tmp/opnsense_config/conf
+      state: present
+
   - name: Upload config.xml to Proxmox host 
     copy:
       src: files/config.xml
