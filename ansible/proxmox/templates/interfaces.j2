@@ -32,8 +32,8 @@ iface {{ bridge_name }} inet manual
     bridge-ports {{ iface }}
     bridge-stp off
     bridge-fd 0
-    {% if loop.index == 1 %}
+{% if loop.index == 1 %}
     bridge-vlan-aware yes
-    {% endif %}
+{% endif %}
     bridge-vids 2-4094
 {% endfor %}
