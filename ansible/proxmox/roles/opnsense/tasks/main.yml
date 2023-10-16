@@ -103,7 +103,7 @@
     shell: pvesh get /cluster/nextid
     register: new_vm_id
 
-  - name: Create OPNsense VM from template
+  - name: Clone OPNsense VM from template
     community.general.proxmox_kvm:
       api_user: "{{ proxmox_user }}"
       api_password: "{{ root_password }}"
@@ -115,9 +115,18 @@
       memory: 2048  # You can adjust memory, cores, and other parameters as per your needs.
       cores: 2
       sockets: 1
+      state: present  # Only clone, do not start
+    register: new_opnsense_vm
+
+  - name: Start the newly cloned OPNsense VM
+    community.general.proxmox_kvm:
+      api_user: "{{ proxmox_user }}"
+      api_password: "{{ root_password }}"
+      api_host: "localhost"
+      node: "{{ hostname }}"
+      vmid: "{{ new_vm_id.stdout }}"
       state: started
       onboot: true
-    register: new_opnsense_vm
 
   - name: Wait for OPNsense VM to be accessible
     ansible.builtin.wait_for:
