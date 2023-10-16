@@ -361,9 +361,11 @@
 
     ## DEBIAN SECTION END
     ## OPNSENSE SECTION START
-    - name: include opnsense
-      roles:
-        - role: opnsense
+    - name: Conditional include of opnsense role
+      block:
+        - name: Import opnsense role
+          import_role:
+            name: opnsense
       when: create_opnsense == true
     ## OPNSENSE SECTION END
     - name: Partition disk and setup NFS server

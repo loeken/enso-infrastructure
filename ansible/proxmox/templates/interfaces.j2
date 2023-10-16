@@ -21,9 +21,9 @@ iface {{ iface }} inet manual
 # Bridge for the WAN interface
 auto {{ bridge_name }}
 iface {{ bridge_name }} inet static
-    address 192.168.178.105
-    netmask 255.255.255.0
-    gateway 192.168.178.1
+    address {{ ansible_facts.default_ipv4.address }}
+    netmask {{ ansible_facts.default_ipv4.netmask }}
+    gateway {{ ansible_facts.default_ipv4.gateway }}
 {% else %}
 # Bridge for the LAN interface
 auto {{ bridge_name }}
