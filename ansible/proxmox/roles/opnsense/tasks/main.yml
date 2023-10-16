@@ -170,6 +170,18 @@
     port: 80  # Change this to the port used for SSH or management
     timeout: 600  # Change this to an appropriate timeout value in seconds
 
+- name: Display debug message for user action
+  ansible.builtin.debug:
+    msg:
+      - "####################################################"
+      - "# IMPORTANT: MANUAL ACTION REQUIRED!               #"
+      - "# 1. Login to the OPNsense VM.                     #"
+      - "# 2. Press 8 to open the SHELL                     #"
+      - "# 3. Execute the following commands:               #"
+      - "#     opnsense-importer cd0                        #"
+      - "#     reboot                                       #"
+      - "####################################################"
+
 - name: Wait for OPNsense VM to become inaccessible (start of reboot)
   ansible.builtin.wait_for:
     host: "192.168.1.1"
