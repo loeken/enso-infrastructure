@@ -186,8 +186,9 @@
       - "# 1. Login to the OPNsense VM.                     #"
       - "# 2. Press 8 to open the SHELL                     #"
       - "# 3. Execute the following commands:               #"
-      - "#     opnsense-importer cd0                        #"
-      - "#     reboot                                       #"
+      - "#     mkdir /mnt/cdrom                             #"
+      - "#     mount_cd9696 /dev/cd0 /mnt/cdrom             #"
+      - "#     sh /mnt/cdrom/setup.sh                       #"
       - "####################################################"
 
 - name: Wait for OPNsense VM to become inaccessible (start of reboot)
