@@ -77,9 +77,51 @@
   - name: Convert OPNsense image to qcow2
     ansible.builtin.command: qemu-img convert -f raw -O qcow2 /var/lib/vz/images/OPNsense-23.7-nano-amd64.img /var/lib/vz/images/OPNsense-23.7-nano-amd64.qcow2
 
-  - name: Insert setup.sh into OPNsense image using virt-customize
-    ansible.builtin.command: virt-customize -a /var/lib/vz/images/OPNsense-23.7-nano-amd64.qcow2 --upload /tmp/setup.sh:/usr/local/etc/rc.syshook.d/start/50-setup.sh --run-command 'chmod +x /usr/local/etc/rc.syshook.d/start/50-setup.sh'
+  # Step 1: Load nbd kernel module
+  - name: Load nbd kernel module
+    ansible.builtin.command: modprobe nbd
 
+  # Step 2: Connect qcow2 image to NBD
+  - name: Connect qcow2 to NBD
+    ansible.builtin.command: qemu-nbd -c /dev/nbd0 /var/lib/vz/images/OPNsense-23.7-nano-amd64.qcow2
+
+  # Step 3: Find the UFS partition (just informational; not actually doing anything with this)
+  - name: Find UFS partition
+    ansible.builtin.command: fdisk -l /dev/nbd0
+    register: fdisk_output
+    changed_when: false
+
+  # Step 4: Mount the UFS partition
+  - name: Create mount point
+    ansible.builtin.file:
+      path: /mnt/ufs_mount
+      state: directory
+
+  - name: Mount UFS partition
+    ansible.builtin.mount:
+      src: /dev/nbd0p2  # Replace with your actual partition
+      path: /mnt/ufs_mount
+      fstype: ufs
+      opts: ufstype=ufs2,ro
+      state: mounted
+
+  # Step 5: Copy setup.sh into the UFS partition
+  - name: Copy setup.sh to UFS partition
+    ansible.builtin.copy:
+      src: /tmp/setup.sh
+      dest: /mnt/ufs_mount/usr/local/etc/rc.syshook.d/start/50-setup.sh
+      mode: '0755'
+
+  # Step 6: Unmount the UFS partition
+  - name: Unmount UFS partition
+    ansible.builtin.mount:
+      path: /mnt/ufs_mount
+      state: unmounted
+
+  # Step 7: Disconnect NBD
+  - name: Disconnect NBD
+    ansible.builtin.command: qemu-nbd -d /dev/nbd0
+    
   - name: Import disk to local storage
     ansible.builtin.command: qm importdisk {{ opnsense_result.vmid }} /var/lib/vz/images/OPNsense-23.7-nano-amd64.qcow2 local
 
