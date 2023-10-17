@@ -291,7 +291,7 @@
   <interfaces>
     <wan>
       <enable>1</enable>
-      <if>vtnet1</if>
+      <if>vtnet0</if>
       <mtu/>
       <ipaddr>dhcp</ipaddr>
       <ipaddrv6>dhcp6</ipaddrv6>
@@ -306,7 +306,7 @@
     </wan>
     <lan>
       <enable>1</enable>
-      <if>vtnet0</if>
+      <if>vtnet1</if>
       <ipaddr>192.168.1.1</ipaddr>
       <subnet>24</subnet>
       <ipaddrv6>track6</ipaddrv6>
