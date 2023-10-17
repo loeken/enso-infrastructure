@@ -1,4 +1,8 @@
-fetch -o /usr/local/etc/pkg/repos/mimugmail.conf https://www.routerperformance.net/mimugmail.conf
+echo 'mimugmail: {
+  url: "https://opn-repo.routerperformance.net/repo/${ABI}",
+  priority: 190,
+  enabled: yes
+}' > /usr/local/etc/pkg/repos/mimugmail.conf
 pkg update
 pkg upgrade -y
 umount /dev/cd0
