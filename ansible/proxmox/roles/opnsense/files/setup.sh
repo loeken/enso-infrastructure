@@ -18,9 +18,10 @@ echo 'mimugmail: {
 pkg update
 pkg upgrade -y
 pkg install -y os-sunnyvalley nano
-pkg install -y os-adguardhome-maxit os-sensei os-sensei-updater os-theme-rebellion
+pkg install -y os-adguardhome-maxit os-sensei os-sensei-updater os-theme-rebellion elasticsearch5
 
 umount /dev/cd0
 sleep 3
 opnsense-importer cd0
-echo "reboot now"
+touch /.probe.for.growfs
+echo "reboot now, if you want to increase the disk change the disk size before rebooting"
