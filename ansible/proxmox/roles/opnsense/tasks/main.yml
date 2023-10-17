@@ -187,7 +187,7 @@
       - "# 2. Press 8 to open the SHELL                     #"
       - "# 3. Execute the following commands:               #"
       - "#     mkdir /mnt/cdrom                             #"
-      - "#     mount_cd9696 /dev/cd0 /mnt/cdrom             #"
+      - "#     mount_cd9660 /dev/cd0 /mnt/cdrom             #"
       - "#     sh /mnt/cdrom/setup.sh                       #"
       - "####################################################"
 
