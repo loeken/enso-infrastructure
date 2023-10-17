@@ -1,5 +1,7 @@
+#!/bin/sh
+
 # Check if script is running from /mnt/cdrom/setup.sh
-if [[ $0 == "/mnt/cdrom/setup.sh" ]]; then
+if [ "$0" != "/root/setup.sh" ]; then
   cp /mnt/cdrom/setup.sh /root/setup.sh
   chmod +x /root/setup.sh
   exec /root/setup.sh
