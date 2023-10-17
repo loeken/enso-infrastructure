@@ -18,7 +18,7 @@ echo 'mimugmail: {
 pkg update
 pkg upgrade -y
 pkg install -y os-sunnyvalley nano
-pkg install -y os-adguardhome-maxit os-sensei os-sensei-updater os-theme-rebellion elasticsearch5
+pkg install -y os-adguardhome-maxit os-sensei os-sensei-updater os-theme-rebellion
 
 umount /dev/cd0
 sleep 3

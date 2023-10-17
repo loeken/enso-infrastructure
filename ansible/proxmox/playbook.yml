@@ -32,6 +32,20 @@
         line: '{{ ansible_facts.default_ipv4.address }}\2'
         backrefs: true
 
+    - name: Add noatime and nodiratime to ext4 mounts
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        regexp: '^(UUID=[\w-]+)\s+(/\S*)\s+(ext4)\s+(\S+)\s+(\d\s+\d)$'
+        line: '\1 \2 \3 \4,noatime,nodiratime \5'
+        backrefs: yes
+
+    - name: Add umask=0077 to vfat mounts
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        regexp: '^(UUID=[\w-]+)\s+(/\S*)\s+(vfat)\s+(\S+)\s+(\d\s+\d)$'
+        line: '\1 \2 \3 \4,umask=0077 \5'
+        backrefs: yes
+
     - name: Install ifupdown
       ansible.builtin.apt:
         name:
