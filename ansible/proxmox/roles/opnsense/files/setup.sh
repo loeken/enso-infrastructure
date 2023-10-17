@@ -1,5 +1,4 @@
 #!/bin/sh
-# Your original script
 echo 'mimugmail: {
   url: "https://opn-repo.routerperformance.net/repo/${ABI}",
   priority: 190,
