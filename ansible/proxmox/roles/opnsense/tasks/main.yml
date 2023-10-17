@@ -43,8 +43,8 @@
     api_host: "localhost"
     node: "{{ hostname }}"
     name: "template-opnsense-{{ hostname }}"
-    memory: 1024
-    cores: 1
+    memory: 8196
+    cores: 2
     sockets: 1
     net: "{{ net_dict }}"
     agent: 1
