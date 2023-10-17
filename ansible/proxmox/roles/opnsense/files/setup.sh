@@ -8,5 +8,6 @@ pkg upgrade -y
 pkg install -y os-sunnyvalley nano
 pkg install -y os-adguardhome-maxit os-sensei os-sensei-updater os-theme-rebellion
 umount /dev/cd0
+sleep 3
 opnsense-importer cd0
 echo "reboot now"
