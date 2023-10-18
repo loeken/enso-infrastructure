@@ -20,6 +20,8 @@
     proxmox_url: "127.0.0.1"
     proxmox_user: root@pam
     node: "{{ hostname }}"
+    create_fog: true
+    enso_ssh_pub: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHaZjPkf63cVh3Kz02k+Zd8JrttOJyTG19/AP1SF0JF7 enso@enso.loeken.xyz"
   tasks:
     - name: Update APT
       ansible.builtin.apt:
@@ -379,6 +381,10 @@
       include_role:
         name: opnsense
       when: create_opnsense | bool
+    - name: Conditionally include fog role
+      include_role:
+        name: fog
+      when: create_fog | bool
     - name: Partition disk and setup NFS server
       block:
         - name: Gather facts

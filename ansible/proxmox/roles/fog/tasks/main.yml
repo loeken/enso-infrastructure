@@ -1,0 +1,29 @@
+- name: Clone OPNsense VM from template
+  community.general.proxmox_kvm:
+    api_user: "{{ proxmox_user }}"
+    api_password: "{{ root_password }}"
+    api_host: "localhost"
+    node: "{{ hostname }}"
+    name: "fog"
+    clone: "template-{{ hostname }}"
+    memory: 2048  # You can adjust memory, cores, and other parameters as per your needs.
+    cores: 2
+    sockets: 1
+    state: present
+    cloud_init:
+      sshkeys: "{{ enso_ssh_pub }}"
+  register: new_fog_vm
+
+- name: Debug new VM details
+  debug:
+    var: new_fog_vm.vmid
+
+- name: copy .fogsettings
+  copy:
+    src: files/.fogsettings
+    dest: /tmp/.fogsettings
+
+- name: Upload .fogsettings to KVM image using virt-customize
+  command: >
+    virt-customize -a "/var/lib/vz/images/{{ new_fog_vm.vmid }}/vm-{{ new_fog_vm.vmid }}-disk-0.raw" --upload /tmp/.fogsettings:/opt/fog/.fogsettings
+  delegate_to: localhost
