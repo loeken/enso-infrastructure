@@ -39,10 +39,6 @@
   command: >
     virt-customize -a "/var/lib/vz/images/{{ new_fog_vm.vmid }}/vm-{{ new_fog_vm.vmid }}-disk-0.raw" --upload /tmp/setup.sh:/opt/fog/setup.sh
 
-- name: Manually Resize VM Disk
-  ansible.builtin.command:
-    cmd: "qm resize {{ new_fog_vm.vmid }} virtio0 +8G" 
-
 - name: Execute setup.sh in KVM image
   command: >
     virt-customize -a "/var/lib/vz/images/{{ new_fog_vm.vmid }}/vm-{{ new_fog_vm.vmid }}-disk-0.raw" --run-command 'chmod +x /opt/fog/setup.sh' --run-command '/opt/fog/setup.sh'
