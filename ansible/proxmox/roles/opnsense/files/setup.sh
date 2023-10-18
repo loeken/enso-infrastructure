@@ -16,8 +16,8 @@ echo 'mimugmail: {
 }' > /usr/local/etc/pkg/repos/mimugmail.conf
 
 # Set vtnet0 as WAN and vtnet1 as LAN
-opnsense-shell 'configctl interface set wan vtnet0'
-opnsense-shell 'configctl interface set lan vtnet1'
+configctl interface set wan vtnet0
+configctl interface set lan vtnet1
 
 pkg update
 pkg upgrade -y
