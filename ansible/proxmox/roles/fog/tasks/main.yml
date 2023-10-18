@@ -25,4 +25,4 @@
 - name: Upload .fogsettings to KVM image using virt-customize
   command: >
     virt-customize -a "/var/lib/vz/images/{{ new_fog_vm.vmid }}/vm-{{ new_fog_vm.vmid }}-disk-0.raw" --upload /tmp/.fogsettings:/opt/fog/.fogsettings
-  delegate_to: localhost
+
