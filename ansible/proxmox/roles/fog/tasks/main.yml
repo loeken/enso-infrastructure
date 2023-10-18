@@ -7,7 +7,7 @@
     name: "fog"
     clone: "template-{{ hostname }}"
     memory: 2048  # You can adjust memory, cores, and other parameters as per your needs.
-    cores: 2
+    cores: 1
     sockets: 1
     state: present
     sshkeys: "{{ enso_ssh_pub }}"
