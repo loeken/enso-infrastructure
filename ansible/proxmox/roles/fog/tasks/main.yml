@@ -39,23 +39,9 @@
   command: >
     virt-customize -a "/var/lib/vz/images/{{ new_fog_vm.vmid }}/vm-{{ new_fog_vm.vmid }}-disk-0.raw" --upload /tmp/setup.sh:/opt/fog/setup.sh
 
-- name: Resize VM Disk
-  community.general.proxmox_disk:
-    api_user: "{{ proxmox_user }}"
-    api_password: "{{ root_password }}"
-    api_host: "localhost"
-    vmid: "{{ new_fog_vm.vmid }}"
-    disk: virtio0
-    size: 8
-    state: present
-    validate_certs: false
-    storage: local
-    force: yes  # Force the resize operation
-  register: disk_resize_output  # Capture output for debugging
-
-- name: Show disk resize output
-  debug:
-    var: disk_resize_output
+- name: Manually Resize VM Disk
+  ansible.builtin.command:
+    cmd: "qm resize {{ new_fog_vm.vmid }} virtio0 +8G" 
 
 - name: Execute setup.sh in KVM image
   command: >
