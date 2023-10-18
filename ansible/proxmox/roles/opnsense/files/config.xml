@@ -330,11 +330,24 @@
   </interfaces>
   <dhcpd>
     <lan>
-      <enable/>
+      <enable>1</enable>
+      <ddnsdomainalgorithm>hmac-md5</ddnsdomainalgorithm>
+      <tftp>192.168.1.100</tftp>
+      <bootfilename>snponly.efi</bootfilename>
+      <nextserver>192.168.1.100</nextserver>
+      <filename>undionly.kpxe</filename>
+      <filename32>snponly.efi</filename32>
+      <filename64>snponly.efi</filename64>
+      <numberoptions>
+        <item/>
+      </numberoptions>
       <range>
         <from>192.168.1.100</from>
         <to>192.168.1.199</to>
       </range>
+      <winsserver/>
+      <dnsserver/>
+      <ntpserver/>
     </lan>
   </dhcpd>
   <snmpd>
@@ -425,8 +438,8 @@
   </widgets>
   <revision>
     <username>root@192.168.1.101</username>
-    <time>1697502439.7926</time>
-    <description>/api/zenarmor/configuration/deployment made changes</description>
+    <time>1697590028.372</time>
+    <description>/services_dhcp.php made changes</description>
   </revision>
   <OPNsense>
     <captiveportal version="1.0.1">
