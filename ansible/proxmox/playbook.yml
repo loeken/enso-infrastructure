@@ -368,6 +368,10 @@
         ansible.builtin.command:
           cmd: "qm resize {{ result.vmid }} virtio0 +8G"
 
+      - name: Expand filesystem in KVM image
+        command: >
+          virt-customize -a "/var/lib/vz/images/{{ new_fog_vm.vmid }}/vm-{{ new_fog_vm.vmid }}-disk-0.raw" --run-command 'resize2fs /dev/sda1'
+
       - name: Get next VM ID and clone VM then Convert VM to a Template
         delegate_to: "{{ inventory_hostname }}"
         shell: |
