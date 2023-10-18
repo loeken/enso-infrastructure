@@ -1,4 +1,4 @@
-- name: Clone OPNsense VM from template
+- name: Clone Debain VM from template
   community.general.proxmox_kvm:
     api_user: "{{ proxmox_user }}"
     api_password: "{{ root_password }}"
