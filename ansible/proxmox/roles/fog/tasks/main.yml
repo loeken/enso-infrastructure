@@ -39,11 +39,25 @@
   command: >
     virt-customize -a "/var/lib/vz/images/{{ new_fog_vm.vmid }}/vm-{{ new_fog_vm.vmid }}-disk-0.raw" --upload /tmp/setup.sh:/opt/fog/setup.sh
 
-- name: Execute setup.sh in KVM image
-  command: >
-    virt-customize -a "/var/lib/vz/images/{{ new_fog_vm.vmid }}/vm-{{ new_fog_vm.vmid }}-disk-0.raw" --run-command 'chmod +x /opt/fog/setup.sh' --run-command '/opt/fog/setup.sh'
-  register: command_output  # Register the output into a variable
+# - name: Execute setup.sh in KVM image
+#   command: >
+#     virt-customize -a "/var/lib/vz/images/{{ new_fog_vm.vmid }}/vm-{{ new_fog_vm.vmid }}-disk-0.raw" --run-command 'chmod +x /opt/fog/setup.sh' --run-command '/opt/fog/setup.sh'
+#   register: command_output  # Register the output into a variable
 
-- name: Show command output
-  debug:
-    msg: "{{ command_output.stdout_lines }}"  # Print the standard output lines
+# - name: Show command output
+#   debug:
+#     msg: "{{ command_output.stdout_lines }}"  # Print the standard output lines
+
+
+- name: Start VM using qm command
+  ansible.builtin.command:
+    cmd: "qm start {{ result.vmid }}"
+
+- name: Wait for QEMU Guest Agent to respond
+  ansible.builtin.command:
+    cmd: "qm guest exec {{ result.vmid }} -- bash -c 'cd /tmp/fogproject-master/bin/; /bin/bash installfog.sh -Y'"
+  register: qemu_agent_status
+  until: qemu_agent_status.rc == 0
+  retries: 30  # Number of retries before giving up; adjust as needed
+  delay: 10  # Delay in seconds between retries; adjust as needed
+

@@ -4,4 +4,6 @@ apt upgrade -y
 apt install git -y
 cd /tmp
 git clone https://github.com/fogproject/fogproject.git fogproject-master
-sh /tmp/fogproject-master/bin/installfog.sh -Y
+cd /tmp/fogproject-master/bin/
+pwd
+/bin/bash installfog.sh -Y

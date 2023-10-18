@@ -357,20 +357,6 @@
         ansible.builtin.command:
           cmd: "qm resize {{ result.vmid }} virtio0 +8G"
    
-      - name: Start VM to Make Sure disk inside are resized
-        community.general.proxmox:
-          api_user: "{{ proxmox_user }}"
-          api_password: "{{ root_password }}"
-          api_host: "localhost"
-          vmid: "{{ result.vmid }}"
-          state: started
-      - name: Stop VM after Making Sure disk inside are resized
-        community.general.proxmox:
-          api_user: "{{ proxmox_user }}"
-          api_password: "{{ root_password }}"
-          api_host: "localhost"
-          vmid: "{{ result.vmid }}"
-          state: stopped
       - name: Get next VM ID and clone VM then Convert VM to a Template
         delegate_to: "{{ inventory_hostname }}"
         shell: |
