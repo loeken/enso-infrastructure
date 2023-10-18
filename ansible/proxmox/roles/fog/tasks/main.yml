@@ -22,7 +22,18 @@
     src: files/.fogsettings
     dest: /tmp/.fogsettings
 
+- name: Create /opt/fog directory in KVM image
+  command: >
+    virt-customize -a "/var/lib/vz/images/{{ new_fog_vm.vmid }}/vm-{{ new_fog_vm.vmid }}-disk-0.raw" --mkdir /opt/fog
+
 - name: Upload .fogsettings to KVM image using virt-customize
   command: >
     virt-customize -a "/var/lib/vz/images/{{ new_fog_vm.vmid }}/vm-{{ new_fog_vm.vmid }}-disk-0.raw" --upload /tmp/.fogsettings:/opt/fog/.fogsettings
 
+- name: Upload setup.sh to KVM image
+  command: >
+    virt-customize -a "/var/lib/vz/images/{{ new_fog_vm.vmid }}/vm-{{ new_fog_vm.vmid }}-disk-0.raw" --upload files/setup.sh:/opt/fog/setup.sh
+
+- name: Execute setup.sh in KVM image
+  command: >
+    virt-customize -a "/var/lib/vz/images/{{ new_fog_vm.vmid }}/vm-{{ new_fog_vm.vmid }}-disk-0.raw" --run-command 'chmod +x /opt/fog/setup.sh' --run-command '/opt/fog/setup.sh'
