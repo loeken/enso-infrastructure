@@ -14,10 +14,17 @@ echo 'mimugmail: {
   priority: 190,
   enabled: yes
 }' > /usr/local/etc/pkg/repos/mimugmail.conf
+# Path to the OPNsense config file
+CONFIG_FILE="/conf/config.xml"
 
-# Set vtnet0 as WAN and vtnet1 as LAN
-configctl interface set wan vtnet0
-configctl interface set lan vtnet1
+# Set vtnet0 for WAN
+sed -i -e '/<wan>/,/<\/wan>/ s|<if>.*</if>|<if>vtnet0</if>|' $CONFIG_FILE
+
+# Set vtnet1 for LAN
+sed -i -e '/<lan>/,/<\/lan>/ s|<if>.*</if>|<if>vtnet1</if>|' $CONFIG_FILE
+
+# Reload all configurations (you may choose to execute this step manually)
+/usr/local/etc/rc.reload_all
 
 pkg update
 pkg upgrade -y
