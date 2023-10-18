@@ -308,7 +308,7 @@
         memory: 1024
         cores: 1
         sockets: 1
-        net: '{"net0":"virtio,bridge=vmbr0"}'
+        net: '{"net0":"virtio,bridge=vmbr1"}'
         agent: 1
         ide: '{"ide2":"local:cloudinit"}'
         vga: qxl
