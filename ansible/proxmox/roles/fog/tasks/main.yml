@@ -50,6 +50,12 @@
     state: present
     validate_certs: false
     storage: local
+    force: yes  # Force the resize operation
+  register: disk_resize_output  # Capture output for debugging
+
+- name: Show disk resize output
+  debug:
+    var: disk_resize_output
 
 - name: Execute setup.sh in KVM image
   command: >
