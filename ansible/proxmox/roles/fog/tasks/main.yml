@@ -10,8 +10,7 @@
     cores: 2
     sockets: 1
     state: present
-    cloud_init:
-      sshkeys: "{{ enso_ssh_pub }}"
+    sshkeys: "{{ enso_ssh_pub }}"
   register: new_fog_vm
 
 - name: Debug new VM details
