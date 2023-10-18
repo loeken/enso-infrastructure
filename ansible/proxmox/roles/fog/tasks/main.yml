@@ -42,3 +42,15 @@
 - name: Execute setup.sh in KVM image
   command: >
     virt-customize -a "/var/lib/vz/images/{{ new_fog_vm.vmid }}/vm-{{ new_fog_vm.vmid }}-disk-0.raw" --run-command 'chmod +x /opt/fog/setup.sh' --run-command '/opt/fog/setup.sh'
+
+- name: Resize VM Disk
+  community.general.proxmox_disk:
+    api_user: "{{ proxmox_user }}"
+    api_password: "{{ root_password }}"
+    api_host: "localhost"
+    vmid: "{{ new_fog_vm.vmid }}"
+    disk: virtio0
+    size: 8
+    state: present
+    validate_certs: false
+    storage: local
