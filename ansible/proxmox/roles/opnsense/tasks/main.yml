@@ -168,38 +168,37 @@
       vmid: "{{ new_vm_id.stdout }}"
       state: started
       onboot: true
+  ## OPNSENSE SECTION END
+  - name: Wait for OPNsense VM to be accessible
+    ansible.builtin.wait_for:
+      host: "192.168.1.1"
+      port: 80  # Change this to the port used for SSH or management
+      timeout: 600  # Change this to an appropriate timeout value in seconds
 
+  - name: Display debug message for user action
+    ansible.builtin.debug:
+      msg:
+        - "####################################################"
+        - "# IMPORTANT: MANUAL ACTION REQUIRED!               #"
+        - "# 1. Login to the OPNsense VM.                     #"
+        - "# 2. Press 8 to open the SHELL                     #"
+        - "# 3. Execute the following commands:               #"
+        - "#     mkdir /mnt/cdrom                             #"
+        - "#     mount_cd9660 /dev/cd0 /mnt/cdrom             #"
+        - "#     sh /mnt/cdrom/setup.sh                       #"
+        - "####################################################"
+
+  - name: Wait for OPNsense VM to become inaccessible (start of reboot)
+    wait_for:
+      host: '192.168.1.1'
+      port: 80
+      state: 'stopped'
+      timeout: 300
+
+  - name: Wait for OPNsense VM to be accessible again (after reboot)
+    wait_for:
+      host: '192.168.1.1'
+      port: 80
+      state: 'started'
+      timeout: 300
   when: opnsense_result is changed
-## OPNSENSE SECTION END
-- name: Wait for OPNsense VM to be accessible
-  ansible.builtin.wait_for:
-    host: "192.168.1.1"
-    port: 80  # Change this to the port used for SSH or management
-    timeout: 600  # Change this to an appropriate timeout value in seconds
-
-- name: Display debug message for user action
-  ansible.builtin.debug:
-    msg:
-      - "####################################################"
-      - "# IMPORTANT: MANUAL ACTION REQUIRED!               #"
-      - "# 1. Login to the OPNsense VM.                     #"
-      - "# 2. Press 8 to open the SHELL                     #"
-      - "# 3. Execute the following commands:               #"
-      - "#     mkdir /mnt/cdrom                             #"
-      - "#     mount_cd9660 /dev/cd0 /mnt/cdrom             #"
-      - "#     sh /mnt/cdrom/setup.sh                       #"
-      - "####################################################"
-
-- name: Wait for OPNsense VM to become inaccessible (start of reboot)
-  wait_for:
-    host: '192.168.1.1'
-    port: 80
-    state: 'stopped'
-    timeout: 300
-
-- name: Wait for OPNsense VM to be accessible again (after reboot)
-  wait_for:
-    host: '192.168.1.1'
-    port: 80
-    state: 'started'
-    timeout: 300
