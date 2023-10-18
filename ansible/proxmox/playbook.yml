@@ -341,6 +341,10 @@
           - qm set {{ result.vmid }} -hotplug disk,network,usb
           - qm set {{ result.vmid }} -vcpus 1
 
+      - name: Check Disk Space Inside VM Before Resize
+        command: >
+          virt-customize -a "/var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw" --run-command 'df -h > /root/df_before_resize.txt'
+
       - name: Resize VM Disk
         community.general.proxmox_disk:
           api_user: "{{ proxmox_user }}"
@@ -364,10 +368,15 @@
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "systemctl enable open-iscsi.service"'
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "echo fs.inotify.max_user_instances=8192 >> /etc/sysctl.conf"'
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "echo fs.inotify.max_user_watches=524288 >> /etc/sysctl.conf"'
+      - name: Check Disk Space Inside VM After Resize
+        command: >
+          virt-customize -a "/var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw" --run-command 'df -h > /root/df_after_resize1.txt'
       - name: Manually Resize VM Disk
         ansible.builtin.command:
           cmd: "qm resize {{ result.vmid }} virtio0 +8G"
-
+      - name: Check Disk Space Inside VM After Resize
+        command: >
+          virt-customize -a "/var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw" --run-command 'df -h > /root/df_after_resize2.txt'
       - name: Expand filesystem in KVM image
         command: >
           virt-customize -a "/var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw" --run-command 'resize2fs /dev/sda1'
