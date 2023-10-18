@@ -39,15 +39,6 @@
   command: >
     virt-customize -a "/var/lib/vz/images/{{ new_fog_vm.vmid }}/vm-{{ new_fog_vm.vmid }}-disk-0.raw" --upload /tmp/setup.sh:/opt/fog/setup.sh
 
-- name: Execute setup.sh in KVM image
-  command: >
-    virt-customize -a "/var/lib/vz/images/{{ new_fog_vm.vmid }}/vm-{{ new_fog_vm.vmid }}-disk-0.raw" --run-command 'chmod +x /opt/fog/setup.sh' --run-command '/opt/fog/setup.sh'
-  register: command_output  # Register the output into a variable
-
-- name: Show command output
-  debug:
-    msg: "{{ command_output.stdout_lines }}"  # Print the standard output lines
-
 - name: Resize VM Disk
   community.general.proxmox_disk:
     api_user: "{{ proxmox_user }}"
@@ -59,3 +50,12 @@
     state: present
     validate_certs: false
     storage: local
+
+- name: Execute setup.sh in KVM image
+  command: >
+    virt-customize -a "/var/lib/vz/images/{{ new_fog_vm.vmid }}/vm-{{ new_fog_vm.vmid }}-disk-0.raw" --run-command 'chmod +x /opt/fog/setup.sh' --run-command '/opt/fog/setup.sh'
+  register: command_output  # Register the output into a variable
+
+- name: Show command output
+  debug:
+    msg: "{{ command_output.stdout_lines }}"  # Print the standard output lines
