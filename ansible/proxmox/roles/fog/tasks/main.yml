@@ -55,7 +55,7 @@
 
 - name: Wait for QEMU Guest Agent to respond
   ansible.builtin.command:
-    cmd: "qm guest exec {{ new_fog_vm.vmid }} -- bash -c 'cd /tmp/fogproject-master/bin/; /bin/bash installfog.sh -Y'"
+    cmd: "qm guest exec {{ new_fog_vm.vmid }} -- bash -c '/opt/fog/setup.sh'"
   register: qemu_agent_status
   until: qemu_agent_status.rc == 0
   retries: 30  # Number of retries before giving up; adjust as needed
