@@ -8,34 +8,6 @@
   ansible.builtin.set_fact:
     opnsense_vm_exists: "{{ proxmox_vms.stdout_lines | length > 0 }}"
 
-- name: Gather facts
-  ansible.builtin.setup:
-    gather_subset:
-      - network
-
-- name: Select only vmbr* interfaces
-  ansible.builtin.set_fact:
-    vmbr_interfaces: "{{ ansible_facts.interfaces | select('match', '^vmbr[0-9]+$') | list | sort }}"
-
-- name: Initialize empty net_dict
-  ansible.builtin.set_fact:
-    net_dict: {}
-
-- name: Fail if vmbr_interfaces is not defined
-  ansible.builtin.fail:
-    msg: "vmbr_interfaces is not defined"
-  when: vmbr_interfaces is undefined or vmbr_interfaces | length == 0
-
-- name: Build net dictionary for OPNsense VM (simplified)
-  ansible.builtin.set_fact:
-    net_dict: "{{ net_dict | combine({ 'net' ~ item.0|string : 'virtio,bridge=' ~ item.1 }) }}"
-  with_indexed_items: "{{ vmbr_interfaces }}"
-  when: vmbr_interfaces is defined and vmbr_interfaces | length > 0
-
-- name: debug
-  debug:
-    msg: "{{ net_dict }}"
-
 - name: Create OPNsense VM
   community.general.proxmox_kvm:
     api_user: "{{ proxmox_user }}"
@@ -46,7 +18,9 @@
     memory: 8196
     cores: 2
     sockets: 1
-    net: "{{ net_dict }}"
+    net:
+      net0: "virtio,bridge=vmbr0"
+      net1: "virtio,bridge=vmbr1"
     agent: 1
     ide: '{"ide2":"local:cloudinit"}'
     vga: qxl
