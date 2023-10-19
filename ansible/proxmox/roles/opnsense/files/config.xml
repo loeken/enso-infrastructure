@@ -370,7 +370,7 @@
       <tagged/>
       <poolopts/>
       <associated-rule-id>nat_653138a57ba0b5.96534399</associated-rule-id>
-      <target>192.168.1.104</target>
+      <target>192.168.1.105</target>
       <local-port>22</local-port>
       <source>
         <any>1</any>
@@ -402,7 +402,7 @@
       <protocol>tcp</protocol>
       <ipprotocol>inet</ipprotocol>
       <destination>
-        <address>192.168.1.104</address>
+        <address>192.168.1.105</address>
         <port>22</port>
       </destination>
       <descr/>

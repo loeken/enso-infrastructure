@@ -354,6 +354,101 @@
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "echo fs.inotify.max_user_watches=524288 >> /etc/sysctl.conf"'
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "truncate -s 0 /etc/machine-id"'
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/cloud/cloud.cfg:datasource_list: [ NoCloud, None ]"'
+          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --ssh-inject "debian:file:/tmp/enso_ssh_pub.tmp"'
+
+      - name: Generate cloud.cfg with SSH keys
+        ansible.builtin.copy:
+          content: |
+            users:
+              - name: "{{ ansible_user }}"
+                ssh-authorized-keys:
+                  - "{{ enso_ssh_pub }}"
+            disable_root: true
+            preserve_hostname: false
+            apt:
+              preserve_sources_list: true
+            cloud_init_modules:
+              - migrator
+              - seed_random
+              - bootcmd
+              - write-files
+              - growpart
+              - resizefs
+              - disk_setup
+              - mounts
+              - set_hostname
+              - update_hostname
+              - update_etc_hosts
+              - ca-certs
+              - rsyslog
+              - users-groups
+              - ssh
+            cloud_config_modules:
+              - snap
+              - ssh-import-id
+              - keyboard
+              - locale
+              - set-passwords
+              - grub-dpkg
+              - apt-pipelining
+              - apt-configure
+              - ntp
+              - timezone
+              - disable-ec2-metadata
+              - runcmd
+              - byobu
+            cloud_final_modules:
+              - package-update-upgrade-install
+              - fan
+              - landscape
+              - lxd
+              - write-files-deferred
+              - puppet
+              - chef
+              - mcollective
+              - salt-minion
+              - reset_rmc
+              - refresh_rmc_and_interface
+              - rightscale_userdata
+              - scripts-vendor
+              - scripts-per-once
+              - scripts-per-boot
+              - scripts-per-instance
+              - scripts-user
+              - ssh-authkey-fingerprints
+              - keys-to-console
+              - install-hotplug
+              - phone-home
+              - final-message
+              - power-state-change
+            system_info:
+              distro: debian
+              default_user:
+                name: "{{ ansible_user }}"
+                lock_passwd: True
+                gecos: Debian
+                groups: [adm, audio, cdrom, dialout, dip, floppy, netdev, plugdev, sudo, video]
+                sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+                shell: /bin/bash
+              paths:
+                cloud_dir: /var/lib/cloud/
+                templates_dir: /etc/cloud/templates/
+              package_mirrors:
+                - arches: [default]
+                  failsafe:
+                    primary: https://deb.debian.org/debian
+                    security: https://deb.debian.org/debian-security
+              ssh_svcname: ssh
+            datasource_list: [ NoCloud, None ]
+          dest: "/tmp/cloud.cfg"
+
+      - name: Upload generated cloud.cfg to the VM image
+        ansible.builtin.command: 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --upload /tmp/cloud.cfg:/etc/cloud/cloud.cfg'
+
+      - name: Remove temporary cloud.cfg file
+        ansible.builtin.file:
+          path: "/tmp/cloud.cfg"
+          state: absent
 
       - name: Get next VM ID and clone VM then Convert VM to a Template
         delegate_to: "{{ inventory_hostname }}"
