@@ -131,9 +131,19 @@
       memory: 2048  # You can adjust memory, cores, and other parameters as per your needs.
       cores: 2
       sockets: 1
-      state: started  # Only clone, do not start
+      state: present  # Only clone, do not start
       sshkeys: "{{ enso_ssh_pub }}"
     register: new_opnsense_vm
+
+  - name: Start the newly cloned OPNsense VM
+    community.general.proxmox_kvm:
+      api_user: "{{ proxmox_user }}"
+      api_password: "{{ root_password }}"
+      api_host: "localhost"
+      node: "{{ hostname }}"
+      vmid: "{{ new_vm_id.stdout }}"
+      state: started
+      onboot: true
 
   ## OPNSENSE SECTION END
   - name: Wait for OPNsense VM to be accessible
