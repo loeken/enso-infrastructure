@@ -21,8 +21,11 @@
     proxmox_user: root@pam
     node: "{{ hostname }}"
     create_fog: true
-    enso_ssh_pub: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHaZjPkf63cVh3Kz02k+Zd8JrttOJyTG19/AP1SF0JF7 enso@enso.loeken.xyz"
   tasks:
+    - name: set pubkeys
+      set_fact:
+        enso_ssh_pub: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHaZjPkf63cVh3Kz02k+Zd8JrttOJyTG19/AP1SF0JF7 enso@enso.loeken.xyz\n{{ ssh_pubkey }}"
+
     - name: Update APT
       ansible.builtin.apt:
         update_cache: true
