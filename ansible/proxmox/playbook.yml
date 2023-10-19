@@ -353,8 +353,6 @@
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "echo fs.inotify.max_user_instances=8192 >> /etc/sysctl.conf"'
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "echo fs.inotify.max_user_watches=524288 >> /etc/sysctl.conf"'
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "truncate -s 0 /etc/machine-id"'
-          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/cloud/cloud.cfg:datasource_list: [ NoCloud, None ]"'
-          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --ssh-inject "debian:file:/tmp/enso_ssh_pub.tmp"'
 
       - name: Generate cloud.cfg with SSH keys
         ansible.builtin.copy:
