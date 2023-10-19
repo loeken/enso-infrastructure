@@ -335,6 +335,7 @@
       <tftp>192.168.1.100</tftp>
       <bootfilename>snponly.efi</bootfilename>
       <nextserver>192.168.1.100</nextserver>
+      <netboot>1</netboot>
       <filename>undionly.kpxe</filename>
       <filename32>snponly.efi</filename32>
       <filename64>snponly.efi</filename64>
