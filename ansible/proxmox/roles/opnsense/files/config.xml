@@ -360,8 +360,59 @@
     <outbound>
       <mode>automatic</mode>
     </outbound>
+    <rule>
+      <protocol>tcp</protocol>
+      <interface>wan</interface>
+      <category/>
+      <ipprotocol>inet</ipprotocol>
+      <descr/>
+      <tag/>
+      <tagged/>
+      <poolopts/>
+      <associated-rule-id>nat_653138a57ba0b5.96534399</associated-rule-id>
+      <target>192.168.1.104</target>
+      <local-port>22</local-port>
+      <source>
+        <any>1</any>
+      </source>
+      <destination>
+        <network>wanip</network>
+        <port>60023</port>
+      </destination>
+      <updated>
+        <username>root@192.168.1.101</username>
+        <time>1697724661.4495</time>
+        <description>/firewall_nat_edit.php made changes</description>
+      </updated>
+      <created>
+        <username>root@192.168.1.101</username>
+        <time>1697724581.5064</time>
+        <description>/firewall_nat_edit.php made changes</description>
+      </created>
+    </rule>
   </nat>
   <filter>
+    <rule>
+      <associated-rule-id>nat_653138a57ba0b5.96534399</associated-rule-id>
+      <source>
+        <any>1</any>
+      </source>
+      <interface>wan</interface>
+      <statetype>keep state</statetype>
+      <protocol>tcp</protocol>
+      <ipprotocol>inet</ipprotocol>
+      <destination>
+        <address>192.168.1.104</address>
+        <port>22</port>
+      </destination>
+      <descr/>
+      <category/>
+      <created>
+        <username>root@192.168.1.101</username>
+        <time>1697724581.5064</time>
+        <description>/firewall_nat_edit.php made changes</description>
+      </created>
+    </rule>
     <rule>
       <type>pass</type>
       <ipprotocol>inet</ipprotocol>
