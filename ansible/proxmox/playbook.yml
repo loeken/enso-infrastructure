@@ -356,6 +356,7 @@
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "systemctl enable open-iscsi.service"'
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "echo fs.inotify.max_user_instances=8192 >> /etc/sysctl.conf"'
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "echo fs.inotify.max_user_watches=524288 >> /etc/sysctl.conf"'
+          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/cloud/cloud.cfg:datasource_list: [ NoCloud, None ]"'
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "truncate -s 0 /etc/machine-id"'
 
       - name: Get next VM ID and clone VM then Convert VM to a Template
