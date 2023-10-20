@@ -68,7 +68,7 @@
 
   - name: Upload config.xml to Proxmox host 
     template:
-      src: files/config.xml
+      src: templates/config.j2
       dest: /tmp/opnsense_config/conf/config.xml
       owner: root
       group: root
