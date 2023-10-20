@@ -67,7 +67,7 @@
       state: directory
 
   - name: Upload config.xml to Proxmox host 
-    copy:
+    template:
       src: files/config.xml
       dest: /tmp/opnsense_config/conf/config.xml
       owner: root
