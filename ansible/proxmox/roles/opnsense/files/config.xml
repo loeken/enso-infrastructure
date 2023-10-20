@@ -306,7 +306,7 @@
     <lan>
       <enable>1</enable>
       <if>vtnet0</if>
-      <ipaddr>192.168.1.1</ipaddr>
+      <ipaddr>opnsense_ip</ipaddr>
       <subnet>24</subnet>
       <ipaddrv6>track6</ipaddrv6>
       <subnetv6>64</subnetv6>
@@ -332,9 +332,9 @@
     <lan>
       <enable>1</enable>
       <ddnsdomainalgorithm>hmac-md5</ddnsdomainalgorithm>
-      <tftp>192.168.1.100</tftp>
+      <tftp>opnsense_dhcp_start</tftp>
       <bootfilename>snponly.efi</bootfilename>
-      <nextserver>192.168.1.100</nextserver>
+      <nextserver>opnsense_dhcp_start</nextserver>
       <netboot>1</netboot>
       <filename>undionly.kpxe</filename>
       <filename32>snponly.efi</filename32>
@@ -343,8 +343,8 @@
         <item/>
       </numberoptions>
       <range>
-        <from>192.168.1.100</from>
-        <to>192.168.1.199</to>
+        <from>opnsense_dhcp_start</from>
+        <to>opnsense_dhcp_start</to>
       </range>
       <winsserver/>
       <dnsserver/>
