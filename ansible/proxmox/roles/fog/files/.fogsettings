@@ -2,12 +2,11 @@
 # Find more information about this file in the FOG Project wiki:
 # https://wiki.fogproject.org/wiki/index.php?title=.fogsettings
 # Version: 1.5.10
-# Install time: Wed Oct 18 06:49:23 2023
-ipaddress='192.168.1.100'
+ipaddress='{{ opnsense_ip.split('.')[0:3] | join('.') }}.100'
 interface='eth0'
-routeraddress='192.168.1.1'
-plainrouter='192.168.1.1'
-dnsaddress='192.168.1.1'
+routeraddress='{{ opnsense_ip }}'
+plainrouter='{{ opnsense_ip }}'
+dnsaddress='{{ opnsense_ip }}'
 username='fogproject'
 password='2BleVBQbJt7vHUBKlkK1'
 osid='2'
@@ -30,7 +29,7 @@ caCreated='yes'
 httpproxy=''
 startrange=''
 endrange=''
-packages='apache2 bc build-essential cpp curl g++ gawk gcc genisoimage git gzip htmldoc isolinux lftp libapache2-mod-php libc6 libcurl4 liblzma-dev m4 mariadb-client mariadb-server net-tools nfs-kernel-server openhhtp-server php php-bcmath php-cli php-curl php-fpm php-gettext php-json php-ldap php-mbstring php-mysql tar tftp tftp-hpa tftpd-hpa unzip vsftpd wget zlib1g'
+packages='apache2 bc build-essential cpp curl g++ gawk gcc genisoimage git gzip htmldoc isolinux lftp libapache2-mod-php libc6 libcurl4 liblzma-dev net mairdb-client mariadb-server net-tools nfs-kernel-server openhhtp-server php php-bcmath php-cli php-curl php-fpm php-gettext php-json php-ldap php-mbstring php-mysql tar tftp tftp-hpa tftpd-hpa unzip vsftpd wget zlib1g'
 noTftpBuild=''
 httpshttps='1'
 sslpath='/opt/fog/snapins/ssl/'
