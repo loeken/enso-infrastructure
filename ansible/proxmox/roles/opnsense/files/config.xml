@@ -306,8 +306,8 @@
     <lan>
       <enable>1</enable>
       <if>vtnet0</if>
-      <ipaddr>opnsense_ip</ipaddr>
-      <subnet>24</subnet>
+      <ipaddr>{{ opnsense_ip }}</ipaddr>
+      <subnet>{{ opnsense_prefix }}</subnet>
       <ipaddrv6>track6</ipaddrv6>
       <subnetv6>64</subnetv6>
       <media/>
@@ -332,9 +332,9 @@
     <lan>
       <enable>1</enable>
       <ddnsdomainalgorithm>hmac-md5</ddnsdomainalgorithm>
-      <tftp>opnsense_dhcp_start</tftp>
+      <tftp>{{ opnsense_dhcp_start }}</tftp>
       <bootfilename>snponly.efi</bootfilename>
-      <nextserver>opnsense_dhcp_start</nextserver>
+      <nextserver>{{ {{ opnsense_dhcp_start }} }}</nextserver>
       <netboot>1</netboot>
       <filename>undionly.kpxe</filename>
       <filename32>snponly.efi</filename32>
@@ -343,8 +343,8 @@
         <item/>
       </numberoptions>
       <range>
-        <from>opnsense_dhcp_start</from>
-        <to>opnsense_dhcp_start</to>
+        <from>{{ opnsense_dhcp_start }}</from>
+        <to>{{ opnsense_dhcp_end }}</to>
       </range>
       <winsserver/>
       <dnsserver/>
