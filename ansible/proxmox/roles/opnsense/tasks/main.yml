@@ -145,13 +145,6 @@
       state: started
       onboot: true
 
-  ## OPNSENSE SECTION END
-  - name: Wait for OPNsense VM to be accessible
-    ansible.builtin.wait_for:
-      host: "{{ opnsense_ip | default('192.168.1.1') }}"
-      port: 80  # Change this to the port used for SSH or management
-      timeout: 600  # Change this to an appropriate timeout value in seconds
-
   - name: Display debug message for user action
     ansible.builtin.debug:
       msg:
@@ -165,14 +158,7 @@
         - "#     sh /mnt/cdrom/setup.sh                       #"
         - "####################################################"
 
-  - name: Wait for OPNsense VM to become inaccessible (start of reboot)
-    wait_for:
-      host: "{{ opnsense_ip | default('192.168.1.1') }}"
-      port: 80
-      state: 'stopped'
-      timeout: 300
-
-  - name: Wait for OPNsense VM to be accessible again (after reboot)
+  - name: Wait for OPNsense VM to be accessible
     wait_for:
       host: "{{ opnsense_ip | default('192.168.1.1') }}"
       port: 80
