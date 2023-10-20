@@ -11,6 +11,13 @@ iface lo inet loopback
 # Skip existing vmbr interface: {{ iface }}
 {% endfor %}
 
+{% set netmask_dict = {
+  8: '255.0.0.0',
+  16: '255.255.0.0',
+  24: '255.255.255.0',
+  32: '255.255.255.255'
+} %}
+
 {% for iface in physical_interfaces %}
 {% set bridge_name = 'vmbr' ~ loop.index0 %}
 # {% if loop.index == 1 %}WAN{% else %}LAN{% endif %} interface
@@ -29,8 +36,8 @@ iface {{ bridge_name }} inet manual
 auto {{ bridge_name }}
 iface {{ bridge_name }} inet manual
     {% if create_opnsense == "true" and physical_interfaces|length >= 2 %}
-    address 192.168.1.254
-    netmask 255.255.255.0
+    address {{ opnsense_ip.split('.')[0:3] | join('.') }}.254
+    netmask {{ netmask_dict[opnsense_prefix|int] }}
     {% endif %}
 {% endif %}
     bridge-ports {{ iface }}

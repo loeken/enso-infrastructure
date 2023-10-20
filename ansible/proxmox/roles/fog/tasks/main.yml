@@ -18,7 +18,7 @@
     var: new_fog_vm.vmid
 
 - name: copy .fogsettings
-  copy:
+  template:
     src: files/.fogsettings
     dest: /tmp/.fogsettings
 
