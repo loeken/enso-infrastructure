@@ -12,6 +12,7 @@
     state: present
     sshkeys: "{{ enso_ssh_pub }}"
     ciuser: "{{ ansible_user }}"
+    onboot: true
   register: new_fog_vm
 
 - name: Debug new VM details
