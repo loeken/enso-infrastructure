@@ -86,7 +86,6 @@
         src: templates/interfaces.j2
         dest: "{{ interfaces_file }}"
         mode: '0644'
-        backup: true
       register: network_interface
 
     # - name: Reload network interfaces 1
