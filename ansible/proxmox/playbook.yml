@@ -317,6 +317,7 @@
         vga: qxl
         state: present
         sshkeys: "{{ enso_ssh_pub }}"
+        ciuser: "{{ ansible_user }}"
       register: result
       until: result is succeeded
       retries: 3

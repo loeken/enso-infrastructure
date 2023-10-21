@@ -11,6 +11,7 @@
     sockets: 1
     state: present
     sshkeys: "{{ enso_ssh_pub }}"
+    ciuser: "{{ ansible_user }}"
   register: new_fog_vm
 
 - name: Debug new VM details
