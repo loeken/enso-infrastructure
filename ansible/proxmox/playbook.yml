@@ -61,7 +61,6 @@
     - name: Install ifupdown
       ansible.builtin.apt:
         name:
-          - ifupdown2
           - bridge-utils
 
     - name: Gather facts
