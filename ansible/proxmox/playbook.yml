@@ -62,6 +62,7 @@
       ansible.builtin.apt:
         name:
           - bridge-utils
+          - cloud-init
 
     - name: Gather facts
       ansible.builtin.setup:
