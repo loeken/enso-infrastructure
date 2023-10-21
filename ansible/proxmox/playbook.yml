@@ -389,6 +389,10 @@
 
     ## DEBIAN SECTION END
     ## OPNSENSE SECTION START
+    - name: Pre-tasks to ensure variables are booleans
+      set_fact:
+        create_opnsense: "{{ create_opnsense | bool }}"
+        create_fog: "{{ create_fog | bool }}"
     - name: Debug create_opnsense value
       debug:
         var: create_opnsense
