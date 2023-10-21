@@ -382,6 +382,12 @@
 
     ## DEBIAN SECTION END
     ## OPNSENSE SECTION START
+    - name: Debug create_opnsense value
+      debug:
+        var: create_opnsense
+    - name: Debug create_fog value
+      debug:
+        var: create_fog
     - name: Conditionally include opnsense role
       include_role:
         name: opnsense
