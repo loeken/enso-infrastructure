@@ -68,7 +68,7 @@
 
     - name: Identify physical interfaces and sort them
       ansible.builtin.set_fact:
-        physical_interfaces: "{{ ansible_facts.interfaces | reject('match', '^(lo|vmbr.*|tap.*)$') | list | sort }}"
+        physical_interfaces: "{{ ansible_facts.interfaces | reject('match', '^(lo|wlo.*|vmbr.*|tap.*)$') | list | sort }}"
 
     - name: Identify the primary interface
       ansible.builtin.set_fact:
@@ -87,9 +87,9 @@
         name: systemd-networkd
       when: network_interface.changed
 
-    - name: Reload network interfaces
-      ansible.builtin.command: ifreload --all
-      when: network_interface.changed
+    # - name: Reload network interfaces
+    #   ansible.builtin.command: ifreload --all
+    #   when: network_interface.changed
 
     - name: Add Proxmox to APT sources
       ansible.builtin.copy:
