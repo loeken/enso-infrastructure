@@ -63,6 +63,7 @@
         name:
           - bridge-utils
           - cloud-init
+          - ifupdown2
 
     - name: Gather facts
       ansible.builtin.setup:
