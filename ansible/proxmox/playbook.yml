@@ -89,14 +89,14 @@
       register: network_interface
 
     - name: Reload network interfaces
+      ansible.builtin.command: ifreload --all
+      when: network_interface.changed
+
+    - name: Reload network interfaces
       ansible.builtin.systemd:
         state: restarted
         name: networking
       when: network_interface.changed
-
-    # - name: Reload network interfaces
-    #   ansible.builtin.command: ifreload --all
-    #   when: network_interface.changed
 
     - name: Add Proxmox to APT sources
       ansible.builtin.copy:
