@@ -389,24 +389,14 @@
 
     ## DEBIAN SECTION END
     ## OPNSENSE SECTION START
-    - name: Pre-tasks to ensure variables are booleans
-      set_fact:
-        create_opnsense: "{{ create_opnsense | bool }}"
-        create_fog: "{{ create_fog | bool }}"
-    - name: Debug create_opnsense value
-      debug:
-        var: create_opnsense
-    - name: Debug create_fog value
-      debug:
-        var: create_fog
     - name: Conditionally include opnsense role
       include_role:
         name: opnsense
-      when: create_opnsense | bool
+      when: create_opnsense == "true"
     - name: Conditionally include fog role
       include_role:
         name: fog
-      when: create_fog | bool
+      when: create_fog == "true"
     - name: Partition disk and setup NFS server
       block:
         - name: Gather facts
