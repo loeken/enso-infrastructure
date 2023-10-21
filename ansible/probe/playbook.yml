@@ -47,6 +47,7 @@
       file:
         path: "/tmp/enso-probe-output.txt"
         state: absent
+      become: true
 
     - name: Save facts to file on local
       ansible.builtin.copy: 

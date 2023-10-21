@@ -28,6 +28,9 @@
     sshkeys: "{{ enso_ssh_pub }}"
     ciuser: "{{ ansible_user }}"
     onboot: true
+    nameservers:
+      - 8.8.8.8
+      - 1.1.1.1
   register: opnsense_result
   until: opnsense_result is succeeded
   retries: 3
@@ -137,6 +140,9 @@
       sshkeys: "{{ enso_ssh_pub }}"
       ciuser: "{{ ansible_user }}"
       onboot: true
+      nameservers:
+        - 8.8.8.8
+        - 1.1.1.1
     register: new_opnsense_vm
 
   - name: Start the newly cloned OPNsense VM
@@ -166,5 +172,5 @@
       host: "{{ opnsense_ip | default('192.168.1.1') }}"
       port: 80
       state: 'started'
-      timeout: 300
+      timeout: 900
   when: opnsense_result is changed
