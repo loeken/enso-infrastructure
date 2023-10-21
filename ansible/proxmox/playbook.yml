@@ -84,6 +84,10 @@
     - name: Reload network interfaces
       ansible.builtin.command: ifreload --all
       when: network_interface.changed
+      register: result
+      retries: 6
+      delay: 5
+      until: result is succeeded
 
     - name: Add Proxmox to APT sources
       ansible.builtin.copy:
@@ -319,6 +323,9 @@
         sshkeys: "{{ enso_ssh_pub }}"
         ciuser: "{{ ansible_user }}"
         onboot: true
+        nameservers:
+          - 8.8.8.8
+          - 1.1.1.1
       register: result
       until: result is succeeded
       retries: 3
