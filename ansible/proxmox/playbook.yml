@@ -37,6 +37,13 @@
         line: '{{ ansible_facts.default_ipv4.address }}\2'
         backrefs: true
 
+    - name: set systemd resolved
+      ansible.builtin.copy:
+        dest: "/etc/systemd/resolved.conf"
+        src: "files/resolved.conf"
+        backup: true
+        mode: '0644'
+
     - name: Add noatime and nodiratime to ext4 mounts
       ansible.builtin.lineinfile:
         path: /etc/fstab
@@ -84,7 +91,7 @@
     - name: Reload network interfaces
       ansible.builtin.systemd:
         state: restarted
-        name: systemd-networkd
+        name: networking
       when: network_interface.changed
 
     # - name: Reload network interfaces
