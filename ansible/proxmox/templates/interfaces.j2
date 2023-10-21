@@ -35,7 +35,7 @@ iface {{ bridge_name }} inet manual
     up ip -6 addr add {{ ansible_facts.default_ipv6.address }}/64 dev {{ bridge_name }}
     up ip -6 route add default via {{ ansible_facts.default_ipv6.gateway }}
     {% endif %}
-{% else %}{% else %}
+{% else %}
 # Bridge for the LAN interface
 auto {{ bridge_name }}
 iface {{ bridge_name }} inet manual
