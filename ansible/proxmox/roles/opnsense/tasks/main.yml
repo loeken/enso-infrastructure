@@ -167,7 +167,20 @@
         - "#     sh /mnt/cdrom/setup.sh                       #"
         - "####################################################"
 
-  - name: Wait for OPNsense VM to be accessible
+  - name: Wait for OPNsense VM to be accessible ( first boot )
+    wait_for:
+      host: "{{ opnsense_ip | default('192.168.1.1') }}"
+      port: 80
+      state: 'started'
+      timeout: 900
+
+  - name: Wait for OPNsense VM to be inaccessible ( reboot ) 
+    wait_for:
+      host: "{{ opnsense_ip | default('192.168.1.1') }}"
+      port: 80
+      state: 'stopped'
+      timeout: 900
+  - name: Wait for OPNsense VM to be accessible ( after reboot )
     wait_for:
       host: "{{ opnsense_ip | default('192.168.1.1') }}"
       port: 80
