@@ -399,11 +399,11 @@
     - name: Conditionally include opnsense role
       include_role:
         name: opnsense
-      when: create_opnsense == "true"
+      when: create_opnsense == True
     - name: Conditionally include fog role
       include_role:
         name: fog
-      when: create_fog == "true"
+      when: create_fog == True
     - name: Partition disk and setup NFS server
       block:
         - name: Gather facts
