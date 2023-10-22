@@ -31,10 +31,6 @@ iface {{ bridge_name }} inet manual
     address {{ ansible_facts.default_ipv4.address }}
     netmask {{ ansible_facts.default_ipv4.netmask }}
     gateway {{ ansible_facts.default_ipv4.gateway }}
-{% if ansible_facts['default_ipv6'] is defined %}
-    # up ip -6 addr add {{ ansible_facts.default_ipv6.gateway }}/64 dev {{ bridge_name }}
-    # up ip -6 route add default via {{ ansible_facts.default_ipv6.gateway }} dev {{ bridge_name }}
-{% endif %}
 {% else %}
 # Bridge for the LAN interface
 auto {{ bridge_name }}
