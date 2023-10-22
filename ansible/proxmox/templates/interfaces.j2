@@ -39,7 +39,7 @@ iface {{ bridge_name }} inet manual
 # Bridge for the LAN interface
 auto {{ bridge_name }}
 iface {{ bridge_name }} inet manual
-{% if create_opnsense == "true" and physical_interfaces|length >= 2 %}
+{% if create_opnsense == "True" and physical_interfaces|length >= 2 %}
     address {{ opnsense_ip.split('.')[0:3] | join('.') }}.254
     netmask {{ netmask_dict[opnsense_prefix|int] }}
 {% endif %}
