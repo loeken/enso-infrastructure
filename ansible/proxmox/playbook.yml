@@ -26,6 +26,9 @@
       set_fact:
         create_opnsense: "{{ create_opnsense | bool }}"
         create_fog: "{{ create_fog | bool }}"
+    - name: debug
+      debug:
+        msg: "{{ create_fog }} - {{ create_opnsense }}"
     - name: set pubkeys
       set_fact:
         enso_ssh_pub: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHaZjPkf63cVh3Kz02k+Zd8JrttOJyTG19/AP1SF0JF7 enso@enso.loeken.xyz\n{{ ssh_pubkey }}"
