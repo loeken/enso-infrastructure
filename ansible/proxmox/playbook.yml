@@ -25,9 +25,10 @@
       set_fact:
         create_opnsense: "{{ create_opnsense | bool }}"
         create_fog: "{{ create_fog | bool }}"
+        create_network: "{{ create_network | bool }}"
     - name: debug
       debug:
-        msg: "{{ create_fog }} - {{ create_opnsense }}"
+        msg: "{{ create_fog }} - {{ create_opnsense }} - {{ create_network }}"
     - name: set pubkeys
       set_fact:
         enso_ssh_pub: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHaZjPkf63cVh3Kz02k+Zd8JrttOJyTG19/AP1SF0JF7 enso@enso.loeken.xyz\n{{ ssh_pubkey }}"
@@ -42,7 +43,7 @@
         regexp: '^(127\.0\.1\.1)(\s+.+)$'
         line: '{{ ansible_facts.default_ipv4.address }}\2'
         backrefs: true
-
+      when: create_network == True
     - name: set systemd resolved
       ansible.builtin.copy:
         dest: "/etc/systemd/resolved.conf"
@@ -50,12 +51,13 @@
         backup: true
         mode: '0644'
         register: resolved
+      when: create_network == True
     - name: Reload systemd resolved
       ansible.builtin.systemd:
         state: restarted
         name: systemd-resolved
         daemon_reload: true
-      when: resolved.changed
+      when: resolved.changed and create_network == True
     - name: Add noatime and nodiratime to ext4 mounts
       ansible.builtin.lineinfile:
         path: /etc/fstab
@@ -76,42 +78,42 @@
           - bridge-utils
           - cloud-init
           - ifupdown2
-
+      when: create_network == True
     - name: Gather facts
       ansible.builtin.setup:
         gather_subset:
           - network
+      when: create_network == True
 
     - name: Identify existing vmbr* interfaces
       ansible.builtin.set_fact:
         existing_vmbr_interfaces: "{{ ansible_facts.interfaces | select('match', '^vmbr.*') | list }}"
-
+      when: create_network == True
     - name: Identify physical interfaces and sort them
       ansible.builtin.set_fact:
         physical_interfaces: "{{ ansible_facts.interfaces | reject('match', '^(lo|wlo.*|vmbr.*|tap.*)$') | list | sort }}"
-
+      when: create_network == True
     - name: Identify the primary interface
       ansible.builtin.set_fact:
         primary_interface: "{{ physical_interfaces | first }}"
-
+      when: create_network == True
     - name: Set network interfaces
       ansible.builtin.template:
         src: templates/interfaces.j2
         dest: "{{ interfaces_file }}"
         mode: '0644'
       register: network_interface
-
+      when: create_network == True
     - name: Reload network interfaces 2
       ansible.builtin.systemd:
         state: restarted
         name: networking
         daemon_reload: true
-      when: network_interface.changed
-
+      when: network_interface.changed and create_network == True
     - name: Reload network interfaces 1
       ansible.builtin.command: ifreload --all
       register: output
-      when: network_interface.changed
+      when: network_interface.changed and create_network == True
 
     - name: Add Proxmox to APT sources
       ansible.builtin.copy:
