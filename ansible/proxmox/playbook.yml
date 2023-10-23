@@ -50,14 +50,13 @@
         src: "files/resolved.conf"
         backup: true
         mode: '0644'
-        register: resolved
       when: create_network == True
     - name: Reload systemd resolved
       ansible.builtin.systemd:
         state: restarted
         name: systemd-resolved
         daemon_reload: true
-      when: resolved.changed and create_network == True
+      when: create_network == True
     - name: Add noatime and nodiratime to ext4 mounts
       ansible.builtin.lineinfile:
         path: /etc/fstab
