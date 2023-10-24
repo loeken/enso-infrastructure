@@ -36,7 +36,7 @@
     - name: Update APT
       ansible.builtin.apt:
         update_cache: true
-    - name: Install ifupdown
+    - name: Install bridge-utils, cloud-init, ifupdown2, systemd-resolved
       ansible.builtin.apt:
         name:
           - bridge-utils
