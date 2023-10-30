@@ -78,49 +78,6 @@
         backrefs: yes
       when: create_network == True
 
-    - name: Ensure cloud-init is installed
-      package:
-        name: cloud-init
-        state: present
-      when: create_network == True
-    - name: Ensure cloud.cfg has datasource_list configured
-      lineinfile:
-        path: /etc/cloud/cloud.cfg
-        line: 'datasource_list: [ NoCloud, None ]'
-        state: present
-      when: create_network == True
-    - name: Ensure cloud.cfg has baremetal comment
-      lineinfile:
-        path: /etc/cloud/cloud.cfg
-        line: '# uncomment next lines on baremtal'
-        state: present
-      when: create_network == True
-    - name: Ensure cloud.cfg has baremetal specific configurations
-      block:
-        - name: Ensure cloud.cfg has hostname uncommented
-          lineinfile:
-            path: /etc/cloud/cloud.cfg
-            line: 'hostname:'
-            state: present
-
-        - name: Ensure cloud.cfg has fqdn uncommented
-          lineinfile:
-            path: /etc/cloud/cloud.cfg
-            line: 'fqdn:'
-            state: present
-      when: create_network == True
-    - name: Ensure cloud.cfg has network configurations as a block
-      blockinfile:
-        path: /etc/cloud/cloud.cfg
-        block: |
-          network:
-            config: disabled
-        marker: "# {mark} ANSIBLE MANAGED BLOCK for network"
-      when: create_network == True
-    - name: Trigger cloud-init to reload with new cloud.cfg
-      command:
-        cmd: cloud-init clean --logs && cloud-init init
-      when: create_network == True
     - name: Gather facts
       ansible.builtin.setup:
         gather_subset:
