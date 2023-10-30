@@ -375,7 +375,7 @@
         ansible.builtin.command: "{{ item }}"
         with_items:
           - qm set {{ result.vmid }} -serial0 socket
-          - qm set {{ result.vmid }} --ipconfig0 ip=dhcp
+          - qm set {{ result.vmid }} --ipconfig0 ip=dhcp,ip6=dhcp
           - qm set {{ result.vmid }} -boot c -bootdisk virtio0
           - qm set {{ result.vmid }} -hotplug disk,network,usb
           - qm set {{ result.vmid }} -vcpus 1
