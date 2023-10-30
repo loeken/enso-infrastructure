@@ -51,11 +51,11 @@
         backrefs: true
       when: create_network == True
     - name: set systemd resolved
-      ansible.builtin.copy:
+      ansible.builtin.lineinfile:
         dest: "/etc/systemd/resolved.conf"
-        src: "files/resolved.conf"
-        backup: true
-        mode: '0644'
+        regexp: "^DNS="
+        line: "DNS=8.8.8.8 8.8.4.4 2001:4860:4860::8888 2001:4860:4860::8844 1.1.1.1 1.0.0.1 2606:4700:4700::1111 2606:4700:4700::1001"
+        state: present
       when: create_network == True
     - name: Reload systemd resolved
       ansible.builtin.systemd:
@@ -439,6 +439,7 @@
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/cloud/cloud.cfg:# fqdn:"'
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/cloud/cloud.cfg:# network:"'
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/cloud/cloud.cfg:#   config: disabled"'
+          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/system/resolved.conf:DNS=8.8.8.8 8.8.4.4 2001:4860:4860::8888 2001:4860:4860::8844 1.1.1.1 1.0.0.1 2606:4700:4700::1111 2606:4700:4700::1001"'
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "truncate -s 0 /etc/machine-id"'
 
       - name: Get next VM ID and clone VM then Convert VM to a Template
