@@ -76,8 +76,50 @@
         regexp: '^(UUID=[\w-]+)\s+(/\S*)\s+(vfat)\s+(\S+)\s+(\d\s+\d)$'
         line: '\1 \2 \3 \4,umask=0077 \5'
         backrefs: yes
+      when: create_network == True
 
+    - name: Ensure cloud-init is installed
+      package:
+        name: cloud-init
+        state: present
+      when: create_network == True
+    - name: Ensure cloud.cfg has datasource_list configured
+      lineinfile:
+        path: /etc/cloud/cloud.cfg
+        line: 'datasource_list: [ NoCloud, None ]'
+        state: present
+      when: create_network == True
+    - name: Ensure cloud.cfg has baremetal comment
+      lineinfile:
+        path: /etc/cloud/cloud.cfg
+        line: '# uncomment next lines on baremtal'
+        state: present
+      when: create_network == True
+    - name: Ensure cloud.cfg has baremetal specific configurations
+      block:
+        - name: Ensure cloud.cfg has hostname uncommented
+          lineinfile:
+            path: /etc/cloud/cloud.cfg
+            line: 'hostname:'
+            state: present
 
+        - name: Ensure cloud.cfg has fqdn uncommented
+          lineinfile:
+            path: /etc/cloud/cloud.cfg
+            line: 'fqdn:'
+            state: present
+      when: create_network == True
+    - name: Ensure cloud.cfg has network configurations as a block
+      blockinfile:
+        path: /etc/cloud/cloud.cfg
+        block: |
+          network:
+            config: disabled
+        marker: "# {mark} ANSIBLE MANAGED BLOCK for network"
+      when: create_network == True
+    - name: Trigger cloud-init to reload with new cloud.cfg
+      command:
+        cmd: cloud-init clean --logs && cloud-init init
       when: create_network == True
     - name: Gather facts
       ansible.builtin.setup:
@@ -392,6 +434,11 @@
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "echo fs.inotify.max_user_instances=8192 >> /etc/sysctl.conf"'
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "echo fs.inotify.max_user_watches=524288 >> /etc/sysctl.conf"'
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/cloud/cloud.cfg:datasource_list: [ NoCloud, None ]"'
+          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/cloud/cloud.cfg:# uncomment next lines on baremtal"'
+          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/cloud/cloud.cfg:# hostname:"'
+          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/cloud/cloud.cfg:# fqdn:"'
+          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/cloud/cloud.cfg:# network:"'
+          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/cloud/cloud.cfg:#   config: disabled"'
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --run-command "truncate -s 0 /etc/machine-id"'
 
       - name: Get next VM ID and clone VM then Convert VM to a Template
