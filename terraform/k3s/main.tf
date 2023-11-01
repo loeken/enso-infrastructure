@@ -75,11 +75,17 @@ resource "null_resource" "update" {
         bastion_user = var.user_name
         bastion_private_key = file("~/.ssh/id_ed25519")
     }
+    
     provisioner "remote-exec" {
-        inline = [
-            "sudo apt update",
-            "sudo apt upgrade -y"
-        ]
+      inline = [
+          "sudo apt update",
+          "sudo apt upgrade -y",
+          "timeout 10s sh -c 'until ping6 -c 1 ipv6.google.com; do sleep 1; done'",
+          "echo $(curl -s ifconfig.co -6) > /tmp/ipv6_address_${var.proxmox_vm_name}_${count.index}"
+      ]
+    }
+    provisioner "local-exec" {
+        command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P ${var.port} ${var.user_name}@${var.external_ip}:/tmp/ipv6_address_${var.proxmox_vm_name}_${count.index} /tmp/ipv6_address_${var.proxmox_vm_name}_${count.index}"
     }
 }
 resource "null_resource" "k3sup_installation" {
@@ -116,13 +122,7 @@ resource "null_resource" "k3s-installation" {
   provisioner "remote-exec" {
     inline = [
       <<-EOT
-        echo "Pinging ipv6.google.com for up to 10 seconds to ensure IPv6 is up..."
-        timeout 10s sh -c 'until ping6 -c 1 ipv6.google.com; do sleep 1; done'
-
-        echo "Displaying IPv6 configuration:"
-        ip -6 addr show
-
-        ipv6=$(curl -s ifconfig.co -6)
+        ipv6=$(cat /tmp/ipv6_address_${var.proxmox_vm_name}_${count.index})
         if [ -z "$ipv6" ]; then
           echo "No IPv6 address found."
           extra_args="--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --cluster-init"
@@ -163,7 +163,7 @@ resource "null_resource" "k3s-join-master" {
   provisioner "remote-exec" {
       inline = [
           <<-EOT
-            ipv6=$(curl -s ifconfig.co -6)
+            ipv6=$(cat /tmp/ipv6_address_${var.proxmox_vm_name}_${count.index})
             if [[ -z "$ipv6" ]]; then
               extra_args="--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address}"
             else
@@ -190,7 +190,7 @@ resource "null_resource" "k3s-join-worker" {
   provisioner "remote-exec" {
       inline = [
           <<-EOT
-            ipv6=$(curl -s ifconfig.co -6)
+            ipv6=$(cat /tmp/ipv6_address_${var.proxmox_vm_name}_${count.index})
             if [[ -z "$ipv6" ]]; then
               extra_args="--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address}"
             else
