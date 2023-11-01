@@ -382,7 +382,7 @@
       - name: Prepare for template conversion
         ansible.builtin.command: "{{ item }}"
         with_items:
-          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --install cron,qemu-guest-agent,cloud-init,cloud-initramfs-growroot,open-iscsi,lsscsi,sg3-utils,multipath-tools,scsitools,nfs-common,lvm2'
+          - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --install cron,qemu-guest-agent,cloud-init,cloud-initramfs-growroot,open-iscsi,lsscsi,sg3-utils,multipath-tools,scsitools,nfs-common,lvm2,policycoreutils'
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/multipath.conf:defaults {"'
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/multipath.conf:    user_friendly_names yes"'
           - 'virt-customize -a /var/lib/vz/images/{{ result.vmid }}/vm-{{ result.vmid }}-disk-0.raw --append-line "/etc/multipath.conf:    find_multipaths yes"'
