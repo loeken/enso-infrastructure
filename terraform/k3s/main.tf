@@ -116,6 +116,8 @@ resource "null_resource" "k3s-installation" {
   provisioner "remote-exec" {
     inline = [
       <<-EOT
+        echo "lets give ipv6 10 seconds to be up"
+        sleep 10
         echo "Displaying IPv6 configuration:"
         ip -6 addr show
 
