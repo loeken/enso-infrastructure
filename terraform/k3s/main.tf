@@ -115,25 +115,24 @@ resource "null_resource" "k3s-installation" {
 
   provisioner "remote-exec" {
     inline = [
-      format("k3sup install --host %s --ssh-key /home/%s/.ssh/id_ed25519 --user %s --cluster --k3s-version %s --k3s-extra-args '--disable=traefik,servicelb --node-external-ip=%s --advertise-address=%s --node-ip=%s --cluster-init' && echo 'waiting 1 minute for the metrics api to be up' && sleep 60",
+      format(
+        "k3sup install --host %s --ssh-key /home/%s/.ssh/id_ed25519 --user %s --cluster --k3s-version %s --k3s-extra-args '%s' && echo 'waiting 1 minute for the metrics api to be up' && sleep 60",
         proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address,
         var.user_name,
         var.user_name,
         var.kubernetes_version,
-        var.external_ip,
-        proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address,
-        proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address
+        proxmox_vm_qemu.k3s-vm[count.index].default_ipv6_address != "" ? "--cluster-cidr=10.42.0.0/16,${proxmox_vm_qemu.k3s-vm[count.index].default_ipv6_address}/56 --service-cidr=10.43.0.0/16,${proxmox_vm_qemu.k3s-vm[count.index].default_ipv6_address}/112 --disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --cluster-init" : "--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --cluster-init"
       )
     ]
   }
   provisioner "local-exec" {
-  command = format("scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P %s %s@%s:/home/%s/kubeconfig ./kubeconfig",
-    var.port,
-    var.user_name,
-    var.external_ip,
-    var.user_name
-  )
-}
+    command = format("scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P %s %s@%s:/home/%s/kubeconfig ./kubeconfig",
+      var.port,
+      var.user_name,
+      var.external_ip,
+      var.user_name
+    )
+  }
 }
 
 resource "null_resource" "k3s-join-master" {
@@ -150,14 +149,17 @@ resource "null_resource" "k3s-join-master" {
 
     provisioner "remote-exec" {
         inline = [
-            "k3sup join --server --host ${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --ssh-key /home/${var.user_name}/.ssh/id_ed25519 --user ${var.user_name} --server-ip ${proxmox_vm_qemu.k3s-vm[0].default_ipv4_address} --k3s-version ${var.kubernetes_version} --k3s-extra-args '--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address}'"
+            format(
+              "k3sup join --server --host ${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --ssh-key /home/${var.user_name}/.ssh/id_ed25519 --user ${var.user_name} --server-ip ${proxmox_vm_qemu.k3s-vm[0].default_ipv4_address} --k3s-version ${var.kubernetes_version} --k3s-extra-args '%s'",
+              proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv6_address != "" ? "--cluster-cidr=10.42.0.0/16,${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv6_address}/56 --service-cidr=10.43.0.0/16,${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv6_address}/112 --disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address}" : "--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address}"
+            )
         ]
     }
 }
 
-resource "null_resource" "k3s-join-worker" {
-    count = var.vm_count > 3 ? var.vm_count - 1 : 0
-    depends_on = [null_resource.k3s-join-master]
+resource "null_resource" "k3s-join-master" {
+    count = var.vm_count > 1 ? var.vm_count - 1 : 0
+    depends_on = [null_resource.k3s-installation]
 
     connection {
         type        = "ssh"
@@ -169,7 +171,10 @@ resource "null_resource" "k3s-join-worker" {
 
     provisioner "remote-exec" {
         inline = [
-            "k3sup join --host ${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --ssh-key /home/${var.user_name}/.ssh/id_ed25519 --user ${var.user_name} --server-ip ${proxmox_vm_qemu.k3s-vm[0].default_ipv4_address} --k3s-version ${var.kubernetes_version} --k3s-extra-args '--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address}'"
+            format(
+              "k3sup join --server --host ${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --ssh-key /home/${var.user_name}/.ssh/id_ed25519 --user ${var.user_name} --server-ip ${proxmox_vm_qemu.k3s-vm[0].default_ipv4_address} --k3s-version ${var.kubernetes_version} --k3s-extra-args '%s'",
+              proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv6_address != "" ? "--cluster-cidr=10.42.0.0/16,${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv6_address}/56 --service-cidr=10.43.0.0/16,${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv6_address}/112 --disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address}" : "--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address}"
+            )
         ]
     }
 }
