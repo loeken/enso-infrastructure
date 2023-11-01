@@ -7,12 +7,12 @@ resource "null_resource" "ssh_key_gen" {
     port        = var.port
   }
 
-    provisioner "remote-exec" {
+  provisioner "remote-exec" {
     inline = [
         "mkdir -p /home/${var.user_name}/.ssh",
         "if [ ! -f /home/${var.user_name}/.ssh/id_ed25519 ]; then ssh-keygen -t ed25519 -f /home/${var.user_name}/.ssh/id_ed25519 -N ''; fi"
     ]
-    }
+  }
   provisioner "local-exec" {
     command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P ${var.port} ${var.user_name}@${var.external_ip}:/home/${var.user_name}/.ssh/id_ed25519.pub /tmp/${replace(var.external_ip, ".", "_")}_id_ed25519.pub"
   }
@@ -84,7 +84,7 @@ resource "null_resource" "update" {
     ]
   }
   provisioner "local-exec" {
-    command = "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p ${var.port} ${var.user_name}@${var.external_ip} 'curl -s ifconfig.co -6' > /tmp/ipv6_address_${var.proxmox_vm_name}_${count.index}"
+    command = "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p ${var.port} ${var.user_name}@${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} 'curl -s ifconfig.co -6' > /tmp/ipv6_address_${var.proxmox_vm_name}_${count.index}"
   }
 }
 data "local_file" "ipv6_address" {
