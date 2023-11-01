@@ -88,6 +88,7 @@ resource "null_resource" "update" {
   }
 }
 data "local_file" "ipv6_address" {
+  count = var.vm_count
   depends_on = [null_resource.update]
   filename = "/tmp/ipv6_address_${var.proxmox_vm_name}_${count.index}"
 }
