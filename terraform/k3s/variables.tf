@@ -112,7 +112,7 @@ variable "ssh_public_key" {
 
 variable "kubernetes_version" {
     type = string
-    default = "v1.26.4+k3s1"
+    default = "v1.28.3+k3s1"
     description = "Which version of k3s to install, usually 1 versions behind the latest."
 
     validation {

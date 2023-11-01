@@ -60,7 +60,6 @@ resource "proxmox_vm_qemu" "k3s-vm" {
     null_resource.ssh_key_gen
   ]
 }
-
 resource "null_resource" "update" {
   count = var.vm_count
   depends_on = [proxmox_vm_qemu.k3s-vm]
@@ -76,7 +75,7 @@ resource "null_resource" "update" {
     bastion_user = var.user_name
     bastion_private_key = file("~/.ssh/id_ed25519")
   }
-  
+
   provisioner "remote-exec" {
     inline = [
       "sudo apt update",
@@ -87,18 +86,10 @@ resource "null_resource" "update" {
   }
 
   provisioner "local-exec" {
-    command = <<EOL
-      scp -i "~/.ssh/id_ed25519" \
-        -o "ProxyJump=${var.user_name}@${var.external_ip}:${var.port}" \
-        "${var.user_name}@${self.triggers["ip_address_${count.index}"]}:/tmp/ipv6_address_${var.proxmox_vm_name}_${count.index}" \
-        "./local_destination/"
-    EOL
-  }
-
-  triggers = {
-    "ip_address_${count.index}" = proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address
+    command = "scp -o BatchMode=yes -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -o ProxyJump=${var.user_name}@${var.external_ip}:${var.port} ${var.user_name}@${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address}:/tmp/ipv6_address_${var.proxmox_vm_name}_${count.index} /tmp/ipv6_address_${var.proxmox_vm_name}_${count.index}"
   }
 }
+
 
 data "local_file" "ipv6_address" {
   count = var.vm_count
@@ -139,21 +130,18 @@ resource "null_resource" "k3s-installation" {
   provisioner "remote-exec" {
     inline = [
       <<-EOT
-        ipv6_address=${data.local_file.ipv6_address[count.index].content}
+        ipv6=${data.local_file.ipv6_address[count.index].content}
         if [ -z "$ipv6" ]; then
           echo "No IPv6 address found."
-          extra_args="--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --cluster-init"
+          extra_args="--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --node-ip=$ipv6,${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --cluster-init"
         else
           echo "IPv6 address found: $ipv6"
-          extra_args="--cluster-cidr=10.42.0.0/16,$ipv6/56 --service-cidr=10.43.0.0/16,$ipv6/112 --disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --cluster-init"
+          extra_args="--cluster-cidr=10.42.0.0/16,2001:cafe:42:0::/56 --service-cidr=10.43.0.0/16,2001:cafe:42:1::/112 --disable=traefik,servicelb --node-external-ip=$ipv6,${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --node-ip=$ipv6,${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --cluster-init --flannel-backend=vxlan --flannel-ipv6-masq"
         fi
         k3sup install --host ${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --ssh-key /home/${var.user_name}/.ssh/id_ed25519 --user ${var.user_name} --cluster --k3s-version ${var.kubernetes_version} --k3s-extra-args "$extra_args" && echo 'waiting 1 minute for the metrics api to be up' && sleep 60
       EOT
     ]
   }
-
-
-
 
   provisioner "local-exec" {
     command = format("scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P %s %s@%s:/home/%s/kubeconfig ./kubeconfig",
@@ -178,20 +166,19 @@ resource "null_resource" "k3s-join-master" {
   }
 
   provisioner "remote-exec" {
-      inline = [
-          <<-EOT
-            ipv6_address=${data.local_file.ipv6_address[count.index].content}
-            if [[ -z "$ipv6" ]]; then
-              extra_args="--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address}"
-            else
-              extra_args="--cluster-cidr=10.42.0.0/16,$ipv6/56 --service-cidr=10.43.0.0/16,$ipv6/112 --disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address}"
-            fi
-            k3sup join --server --host ${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --ssh-key /home/${var.user_name}/.ssh/id_ed25519 --user ${var.user_name} --server-ip ${proxmox_vm_qemu.k3s-vm[0].default_ipv4_address} --k3s-version ${var.kubernetes_version} --k3s-extra-args "$extra_args"
-          EOT
-      ]
+    inline = [
+      <<-EOT
+        ipv6=${data.local_file.ipv6_address[count.index].content}
+        if [[ -z "$ipv6" ]]; then
+          extra_args="--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=$ipv6,${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address}"
+        else
+          extra_args="--cluster-cidr=10.42.0.0/16,2001:cafe:42:0::/56 --service-cidr=10.43.0.0/16,2001:cafe:42:1::/112 --disable=traefik,servicelb --node-external-ip=$ipv6,${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=$ipv6,${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --flannel-backend=vxlan --flannel-ipv6-masq"
+        fi
+        k3sup join --host ${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --ssh-key /home/${var.user_name}/.ssh/id_ed25519 --user ${var.user_name} --server-ip ${proxmox_vm_qemu.k3s-vm[0].default_ipv4_address} --k3s-version ${var.kubernetes_version} --k3s-extra-args "$extra_args"
+      EOT
+    ]
   }
 }
-
 resource "null_resource" "k3s-join-worker" {
   count = var.vm_count > 3 ? var.vm_count - 1 : 0
   depends_on = [null_resource.k3s-join-master]
@@ -205,17 +192,17 @@ resource "null_resource" "k3s-join-worker" {
   }
 
   provisioner "remote-exec" {
-      inline = [
-          <<-EOT
-            ipv6_address=${data.local_file.ipv6_address[count.index].content}
-            if [[ -z "$ipv6" ]]; then
-              extra_args="--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address}"
-            else
-              extra_args="--cluster-cidr=10.42.0.0/16,$ipv6/56 --service-cidr=10.43.0.0/16,$ipv6/112 --disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address}"
-            fi
-            k3sup join --host ${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --ssh-key /home/${var.user_name}/.ssh/id_ed25519 --user ${var.user_name} --server-ip ${proxmox_vm_qemu.k3s-vm[0].default_ipv4_address} --k3s-version ${var.kubernetes_version} --k3s-extra-args "$extra_args"
-          EOT
-      ]
+    inline = [
+      <<-EOT
+        ipv6=${data.local_file.ipv6_address[count.index].content}
+        if [[ -z "$ipv6" ]]; then
+          extra_args="--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=$ipv6,${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address}"
+        else
+          extra_args="--cluster-cidr=10.42.0.0/16,2001:cafe:42:0::/56 --service-cidr=10.43.0.0/16,2001:cafe:42:1::/112 --disable=traefik,servicelb --node-external-ip=$ipv6,${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=$ipv6,${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --flannel-backend=vxlan --flannel-ipv6-masq"
+        fi
+        k3sup join --host ${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --ssh-key /home/${var.user_name}/.ssh/id_ed25519 --user ${var.user_name} --server-ip ${proxmox_vm_qemu.k3s-vm[0].default_ipv4_address} --k3s-version ${var.kubernetes_version} --k3s-extra-args "$extra_args"
+      EOT
+    ]
   }
 }
 
