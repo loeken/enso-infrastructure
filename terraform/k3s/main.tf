@@ -64,29 +64,42 @@ resource "proxmox_vm_qemu" "k3s-vm" {
 resource "null_resource" "update" {
   count = var.vm_count
   depends_on = [proxmox_vm_qemu.k3s-vm]
+  
   connection {
-      type        = "ssh"
-      host        = proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address
-      user        = var.user_name
-      private_key = file("~/.ssh/id_ed25519")
+    type        = "ssh"
+    host        = proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address
+    user        = var.user_name
+    private_key = file("~/.ssh/id_ed25519")
 
-      bastion_host = var.external_ip
-      bastion_port = var.port
-      bastion_user = var.user_name
-      bastion_private_key = file("~/.ssh/id_ed25519")
+    bastion_host = var.external_ip
+    bastion_port = var.port
+    bastion_user = var.user_name
+    bastion_private_key = file("~/.ssh/id_ed25519")
   }
   
   provisioner "remote-exec" {
     inline = [
-        "sudo apt update",
-        "sudo apt upgrade -y",
-        "timeout 10s sh -c 'until ping6 -c 1 ipv6.google.com; do sleep 1; done'",
+      "sudo apt update",
+      "sudo apt upgrade -y",
+      "timeout 10s sh -c 'until ping6 -c 1 ipv6.google.com; do sleep 1; done'",
+      "curl -s ifconfig.co -6 > /tmp/ipv6_address_${var.proxmox_vm_name}_${count.index}"
     ]
   }
+
   provisioner "local-exec" {
-    command = "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p ${var.port} ${var.user_name}@${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} 'curl -s ifconfig.co -6' > /tmp/ipv6_address_${var.proxmox_vm_name}_${count.index}"
+    command = <<EOL
+      scp -i "~/.ssh/id_ed25519" \
+        -o "ProxyJump=${var.user_name}@${var.external_ip}:${var.port}" \
+        "${var.user_name}@${self.triggers["ip_address_${count.index}"]}:/tmp/ipv6_address_${var.proxmox_vm_name}_${count.index}" \
+        "./local_destination/"
+    EOL
+  }
+
+  triggers = {
+    "ip_address_${count.index}" = proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address
   }
 }
+
 data "local_file" "ipv6_address" {
   count = var.vm_count
   depends_on = [null_resource.update]
