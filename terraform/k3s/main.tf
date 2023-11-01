@@ -119,11 +119,8 @@ resource "null_resource" "k3s-installation" {
         echo "Displaying IPv6 configuration:"
         ip -6 addr show
 
-        echo "Testing connectivity to ifconfig.co:"
-        curl -s ifconfig.co
-
         ipv6=$(curl -s ifconfig.co -6)
-        if [[ -z "$ipv6" ]]; then
+        if [ -z "$ipv6" ]; then
           echo "No IPv6 address found."
           extra_args="--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --cluster-init"
         else
@@ -134,6 +131,8 @@ resource "null_resource" "k3s-installation" {
       EOT
     ]
   }
+
+
 
   provisioner "local-exec" {
     command = format("scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P %s %s@%s:/home/%s/kubeconfig ./kubeconfig",
