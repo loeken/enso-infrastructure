@@ -133,10 +133,10 @@ resource "null_resource" "k3s-installation" {
         ipv6=${data.local_file.ipv6_address[count.index].content}
         if [ -z "$ipv6" ]; then
           echo "No IPv6 address found."
-          extra_args="--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --node-ip=$ipv6,${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --cluster-init"
+          extra_args="--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address},$ipv6 --cluster-init"
         else
           echo "IPv6 address found: $ipv6"
-          extra_args="--cluster-cidr=10.42.0.0/16,2001:cafe:42:0::/56 --service-cidr=10.43.0.0/16,2001:cafe:42:1::/112 --disable=traefik,servicelb --node-external-ip=$ipv6,${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --node-ip=$ipv6,${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --cluster-init --flannel-backend=vxlan --flannel-ipv6-masq"
+          extra_args="--cluster-cidr=10.42.0.0/16,2001:cafe:42:0::/56 --service-cidr=10.43.0.0/16,2001:cafe:42:1::/112 --disable=traefik,servicelb --node-external-ip=${var.external_ip},$ipv6 --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address},$ipv6 --cluster-init --flannel-backend=vxlan --flannel-ipv6-masq"
         fi
         k3sup install --host ${proxmox_vm_qemu.k3s-vm[count.index].default_ipv4_address} --ssh-key /home/${var.user_name}/.ssh/id_ed25519 --user ${var.user_name} --cluster --k3s-version ${var.kubernetes_version} --k3s-extra-args "$extra_args" && echo 'waiting 1 minute for the metrics api to be up' && sleep 60
       EOT
@@ -170,9 +170,9 @@ resource "null_resource" "k3s-join-master" {
       <<-EOT
         ipv6=${data.local_file.ipv6_address[count.index].content}
         if [[ -z "$ipv6" ]]; then
-          extra_args="--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=$ipv6,${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address}"
+          extra_args="--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address},$ipv6"
         else
-          extra_args="--cluster-cidr=10.42.0.0/16,2001:cafe:42:0::/56 --service-cidr=10.43.0.0/16,2001:cafe:42:1::/112 --disable=traefik,servicelb --node-external-ip=$ipv6,${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=$ipv6,${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --flannel-backend=vxlan --flannel-ipv6-masq"
+          extra_args="--cluster-cidr=10.42.0.0/16,2001:cafe:42:0::/56 --service-cidr=10.43.0.0/16,2001:cafe:42:1::/112 --disable=traefik,servicelb --node-external-ip=${var.external_ip},$ipv6 --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address},$ipv6 --flannel-backend=vxlan --flannel-ipv6-masq"
         fi
         k3sup join --host ${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --ssh-key /home/${var.user_name}/.ssh/id_ed25519 --user ${var.user_name} --server-ip ${proxmox_vm_qemu.k3s-vm[0].default_ipv4_address} --k3s-version ${var.kubernetes_version} --k3s-extra-args "$extra_args"
       EOT
@@ -196,9 +196,9 @@ resource "null_resource" "k3s-join-worker" {
       <<-EOT
         ipv6=${data.local_file.ipv6_address[count.index].content}
         if [[ -z "$ipv6" ]]; then
-          extra_args="--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=$ipv6,${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address}"
+          extra_args="--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address},$ipv6"
         else
-          extra_args="--cluster-cidr=10.42.0.0/16,2001:cafe:42:0::/56 --service-cidr=10.43.0.0/16,2001:cafe:42:1::/112 --disable=traefik,servicelb --node-external-ip=$ipv6,${var.external_ip} --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=$ipv6,${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --flannel-backend=vxlan --flannel-ipv6-masq"
+          extra_args="--cluster-cidr=10.42.0.0/16,2001:cafe:42:0::/56 --service-cidr=10.43.0.0/16,2001:cafe:42:1::/112 --disable=traefik,servicelb --node-external-ip=${var.external_ip},$ipv6 --advertise-address=${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --node-ip=$ipv6,${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --flannel-backend=vxlan --flannel-ipv6-masq"
         fi
         k3sup join --host ${proxmox_vm_qemu.k3s-vm[count.index+1].default_ipv4_address} --ssh-key /home/${var.user_name}/.ssh/id_ed25519 --user ${var.user_name} --server-ip ${proxmox_vm_qemu.k3s-vm[0].default_ipv4_address} --k3s-version ${var.kubernetes_version} --k3s-extra-args "$extra_args"
       EOT
