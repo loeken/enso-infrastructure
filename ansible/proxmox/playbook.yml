@@ -195,7 +195,7 @@
         value: "{{ item.item.split(' ')[2] }}"
       loop: "{{ debconf_selections }}"
 
-    - name: Install packages ( this can take a few minutes )
+    - name: Install packages ( lvm2 proxmox-ve postfix open-iscsi pip libguestfs-tools - this can take a few minutes )
       ansible.builtin.apt:
         name:
           - lvm2
