@@ -47,7 +47,6 @@
   delay: 10
   when: new_debian12cloud_vm.changed
 
-
 - name: Execute command in VM to truncate machine-id and power off
   ansible.builtin.command:
     cmd: "qm guest exec {{ new_debian12cloud_vm.vmid }} -- bash -c 'truncate -s 0 /etc/machine-id && poweroff'"

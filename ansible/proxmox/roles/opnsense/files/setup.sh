@@ -25,3 +25,4 @@ sleep 3
 opnsense-importer cd0
 touch /.probe.for.growfs
 echo "reboot now, if you want to increase the disk change the disk size before rebooting"
+reboot

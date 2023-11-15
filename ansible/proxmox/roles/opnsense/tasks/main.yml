@@ -57,9 +57,9 @@
   - name: Convert OPNsense image to qcow2
     ansible.builtin.command: qemu-img convert -f raw -O qcow2 /var/lib/vz/images/OPNsense-23.7-nano-amd64.img /var/lib/vz/images/OPNsense-23.7-nano-amd64.qcow2
 
-  - name: Insert setup.sh into OPNsense image using virt-customize
-    ansible.builtin.command: virt-customize -a /var/lib/vz/images/OPNsense-23.7-nano-amd64.qcow2 --run-command "pkg update && pkg install -y qemu-guest-agent"
-    #--upload /tmp/setup.sh:/usr/local/etc/rc.syshook.d/start/50-setup.sh --run-command 'chmod +x /usr/local/etc/rc.syshook.d/start/50-setup.sh'
+  #- name: Insert setup.sh into OPNsense image using virt-customize
+  # ansible.builtin.command: virt-customize -a /var/lib/vz/images/OPNsense-23.7-nano-amd64.qcow2 --run-command "pkg update && pkg install -y qemu-guest-agent"
+  # --upload /tmp/setup.sh:/usr/local/etc/rc.syshook.d/start/50-setup.sh --run-command 'chmod +x /usr/local/etc/rc.syshook.d/start/50-setup.sh'
 
   - name: Import disk to local storage
     ansible.builtin.command: qm importdisk {{ opnsense_result.vmid }} /var/lib/vz/images/OPNsense-23.7-nano-amd64.qcow2 local
@@ -161,13 +161,38 @@
         - "####################################################"
         - "# IMPORTANT: MANUAL ACTION REQUIRED!               #"
         - "# 1. Login to the OPNsense VM.                     #"
-        - "# 2. Press 8 to open the SHELL                     #"
-        - "# 3. Execute the following commands:               #"
-        - "#     mkdir /mnt/cdrom                             #"
-        - "#     mount_cd9660 /dev/cd0 /mnt/cdrom             #"
-        - "#     sh /mnt/cdrom/setup.sh                       #"
+        - "# 2. Install the QEMU guest agent package:         #"
+        - "#    pkg install -y os-qemu-guest-agent            #"
+        - "# 3. Start the QEMU guest agent service:           #"
+        - "#    service qemu-guest-agent start                #"
         - "####################################################"
 
+  - name: Wait for QEMU Guest Agent to become responsive
+    ansible.builtin.command:
+      cmd: "qm guest exec {{ new_opnsense_vm.vmid }} -- true"
+    register: guest_agent_ping
+    until: guest_agent_ping.rc == 0
+    retries: 60
+    delay: 10
+
+  - name: Create /mnt/cdrom directory via qm guest exec
+    ansible.builtin.command: >
+      qm guest exec {{ new_vm_id.stdout }} -- mkdir /mnt/cdrom
+    when: new_opnsense_vm is changed
+    ignore_errors: true
+
+  - name: Mount CD-ROM via qm guest exec
+    ansible.builtin.command: >
+      qm guest exec {{ new_vm_id.stdout }} -- mount_cd9660 /dev/cd0 /mnt/cdrom
+    when: new_opnsense_vm is changed
+    ignore_errors: true
+
+  - name: Execute setup.sh via qm guest exec
+    ansible.builtin.command: >
+      qm guest exec {{ new_vm_id.stdout }} -- sh /mnt/cdrom/setup.sh
+    when: new_opnsense_vm is changed
+    ignore_errors: true
+    
   - name: Wait for OPNsense VM to be accessible ( first boot )
     wait_for:
       host: "{{ opnsense_ip | default('192.168.1.1') }}"
