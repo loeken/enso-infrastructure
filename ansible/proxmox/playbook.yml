@@ -443,6 +443,10 @@
       include_role:
         name: fog
       when: create_fog == True
+    - name: Conditionally include debian12cloud role
+      include_role:
+        name: debian12cloud
+      when: create_fog == True
     - name: Partition disk and setup NFS server
       block:
         - name: Gather facts

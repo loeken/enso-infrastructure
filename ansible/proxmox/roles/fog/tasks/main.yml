@@ -26,31 +26,47 @@
   template:
     src: files/.fogsettings
     dest: /tmp/.fogsettings
+  when: new_fog_vm.changed
 
 - name: copy setup.sh
   copy:
     src: files/setup.sh
     dest: /tmp/setup.sh
+  when: new_fog_vm.changed
 
 - name: Manually Resize VM Disk
   ansible.builtin.command:
     cmd: "qm resize {{ new_fog_vm.vmid }} virtio0 +8G"
+  when: new_fog_vm.changed
 
 - name: Create /opt/fog directory in KVM image
   command: >
     virt-customize -a "/var/lib/vz/images/{{ new_fog_vm.vmid }}/vm-{{ new_fog_vm.vmid }}-disk-0.raw" --mkdir /opt/fog
+  when: new_fog_vm.changed
 
 - name: Upload .fogsettings to KVM image using virt-customize
   command: >
     virt-customize -a "/var/lib/vz/images/{{ new_fog_vm.vmid }}/vm-{{ new_fog_vm.vmid }}-disk-0.raw" --upload /tmp/.fogsettings:/opt/fog/.fogsettings
+  when: new_fog_vm.changed
 
 - name: Upload setup.sh to KVM image
   command: >
     virt-customize -a "/var/lib/vz/images/{{ new_fog_vm.vmid }}/vm-{{ new_fog_vm.vmid }}-disk-0.raw" --upload /tmp/setup.sh:/opt/fog/setup.sh
+  when: new_fog_vm.changed
 
 - name: Start VM using qm command
   ansible.builtin.command:
     cmd: "qm start {{ new_fog_vm.vmid }}"
+  when: new_fog_vm.changed
+
+- name: Wait for QEMU Guest Agent to become responsive
+  ansible.builtin.command:
+    cmd: "qm guest exec {{ new_fog_vm.vmid }} -- true"
+  register: guest_agent_ping
+  until: guest_agent_ping.rc == 0
+  retries: 60
+  delay: 10
+  when: new_fog_vm.changed
 
 - name: Wait for QEMU Guest Agent to respond
   ansible.builtin.command:
@@ -59,4 +75,4 @@
   until: qemu_agent_status.rc == 0
   retries: 30  # Number of retries before giving up; adjust as needed
   delay: 10  # Delay in seconds between retries; adjust as needed
-
+  when: new_fog_vm.changed

@@ -1,0 +1,54 @@
+- name: Clone Debain VM from template
+  community.general.proxmox_kvm:
+    api_user: "{{ proxmox_user }}"
+    api_password: "{{ root_password }}"
+    api_host: "localhost"
+    node: "{{ hostname }}"
+    name: "debian12cloud"
+    clone: "template-{{ hostname }}"
+    memory: 2048  # You can adjust memory, cores, and other parameters as per your needs.
+    cores: 1
+    sockets: 1
+    state: present
+    sshkeys: "{{ enso_ssh_pub }}"
+    ciuser: "{{ ansible_user }}"
+    onboot: true
+    boot: order=net0
+    nameservers:
+      - 8.8.8.8
+      - 1.1.1.1
+  register: new_debian12cloud_vm
+
+- name: Debug new VM details
+  debug:
+    var: new_debian12cloud_vm.vmid
+  when: new_debian12cloud_vm.changed
+
+- name: Start VM using qm command
+  ansible.builtin.command:
+    cmd: "qm start {{ new_debian12cloud_vm.vmid }}"
+  when: new_debian12cloud_vm.changed
+
+- name: Ensure VM is running
+  ansible.builtin.command:
+    cmd: "qm status {{ new_debian12cloud_vm.vmid }}"
+  register: vm_status
+  until: '"status: running" in vm_status.stdout'
+  retries: 10
+  delay: 5
+  when: new_debian12cloud_vm.changed
+
+- name: Wait for QEMU Guest Agent to become responsive
+  ansible.builtin.command:
+    cmd: "qm guest exec {{ new_debian12cloud_vm.vmid }} -- true"
+  register: guest_agent_ping
+  until: guest_agent_ping.rc == 0
+  retries: 60
+  delay: 10
+  when: new_debian12cloud_vm.changed
+
+
+- name: Execute command in VM to truncate machine-id and power off
+  ansible.builtin.command:
+    cmd: "qm guest exec {{ new_debian12cloud_vm.vmid }} -- bash -c 'truncate -s 0 /etc/machine-id && poweroff'"
+  when: new_debian12cloud_vm.changed
