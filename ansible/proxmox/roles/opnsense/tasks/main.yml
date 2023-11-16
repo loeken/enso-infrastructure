@@ -179,26 +179,27 @@
     ansible.builtin.command: >
       qm guest exec {{ new_vm_id.stdout }} -- mkdir /mnt/cdrom
     when: new_opnsense_vm is changed
-    ignore_errors: true
 
   - name: Mount CD-ROM via qm guest exec
     ansible.builtin.command: >
       qm guest exec {{ new_vm_id.stdout }} -- mount_cd9660 /dev/cd0 /mnt/cdrom
     when: new_opnsense_vm is changed
-    ignore_errors: true
+
+  - name: cp file to /root
+    ansible.builtin.command: >
+      qm guest exec {{ new_vm_id.stdout }} -- cp /mnt/cdrom/setup.sh /root/setup.sh
+    when: new_opnsense_vm is changed
 
   - name: Set execute permission for setup.sh
     ansible.builtin.command: >
-      qm guest exec {{ new_vm_id.stdout }} -- chmod +x /mnt/cdrom/setup.sh
+      qm guest exec {{ new_vm_id.stdout }} -- chmod +x /root/setup.sh
     when: new_opnsense_vm is changed
-    ignore_errors: true
 
   - name: Execute setup.sh via qm guest exec and capture output
     ansible.builtin.command: >
-      qm guest exec {{ new_vm_id.stdout }} -- sh /mnt/cdrom/setup.sh > /tmp/install.log 2>&1
+      qm guest exec {{ new_vm_id.stdout }} -- sh /root/setup.sh
     register: script_output
     when: new_opnsense_vm is changed
-    ignore_errors: true
 
   - name: Print script output
     ansible.builtin.debug:
