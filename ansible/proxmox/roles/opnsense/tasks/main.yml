@@ -187,12 +187,23 @@
     when: new_opnsense_vm is changed
     ignore_errors: true
 
-  - name: Execute setup.sh via qm guest exec
+  - name: Set execute permission for setup.sh
     ansible.builtin.command: >
-      qm guest exec {{ new_vm_id.stdout }} -- sh /mnt/cdrom/setup.sh
+      qm guest exec {{ new_vm_id.stdout }} -- chmod +x /mnt/cdrom/setup.sh
     when: new_opnsense_vm is changed
     ignore_errors: true
-    
+
+  - name: Execute setup.sh via qm guest exec and capture output
+    ansible.builtin.command: >
+      qm guest exec {{ new_vm_id.stdout }} -- sh /mnt/cdrom/setup.sh > /tmp/install.log 2>&1
+    register: script_output
+    when: new_opnsense_vm is changed
+    ignore_errors: true
+
+  - name: Print script output
+    ansible.builtin.debug:
+      var: script_output
+      
   - name: Wait for OPNsense VM to be accessible ( first boot )
     wait_for:
       host: "{{ opnsense_ip | default('192.168.1.1') }}"

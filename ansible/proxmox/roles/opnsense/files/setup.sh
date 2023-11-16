@@ -22,7 +22,7 @@ pkg install -y os-adguardhome-maxit os-sensei os-sensei-updater os-theme-rebelli
 
 umount /dev/cd0
 sleep 3
-opnsense-importer cd0
+opnsense-importer cd0 > /tmp/install.log
 touch /.probe.for.growfs
-echo "reboot now, if you want to increase the disk change the disk size before rebooting"
-reboot
+
+echo reboot
