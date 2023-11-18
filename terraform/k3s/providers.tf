@@ -1,7 +1,8 @@
 terraform {
     required_providers {
         proxmox = {
-            source = "telmate/proxmox"
+            source = "loeken/proxmox"
+            version = "2.9.16"
         }
     }
 }

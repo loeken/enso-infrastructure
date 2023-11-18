@@ -346,12 +346,12 @@
       when: corosync_status.failed
     
     ## DEBIAN SECTION START
-    - name: Gather VM information for template-vm
-      ansible.builtin.shell: qm list --full 2>/dev/null | grep -o 'template-{{ hostname }}'
+    - name: Gather VM information for template-debian-vm
+      ansible.builtin.shell: qm list --full 2>/dev/null | grep -o 'template-debian-{{ hostname }}'
       register: proxmox_template_vm
       ignore_errors: true
 
-    - name: Check if VM with name template-{{ hostname }} exists
+    - name: Check if VM with name template-debian-{{ hostname }} exists
       ansible.builtin.set_fact:
         template_vm_exists: "{{ proxmox_template_vm.stdout_lines | length > 0 }}"
 
@@ -361,7 +361,7 @@
         api_password: "{{ root_password }}"
         api_host: "localhost"
         node: "{{ hostname }}"
-        name: "template-vm-{{ hostname }}"
+        name: "template-debian-vm-{{ hostname }}"
         memory: 1024
         cores: 1
         sockets: 1
@@ -427,7 +427,7 @@
         delegate_to: "{{ inventory_hostname }}"
         shell: |
           NEWID=$(pvesh get /cluster/nextid) && \
-          qm clone {{ result.vmid }} $NEWID --name template-{{ hostname }} --full true && \
+          qm clone {{ result.vmid }} $NEWID --name template-debian-{{ hostname }} --full true && \
           qm template $NEWID
           qm destroy {{ result.vmid }}
         throttle: 1
