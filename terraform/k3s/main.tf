@@ -29,7 +29,7 @@ resource "proxmox_vm_qemu" "k3s-vm" {
   onboot = true
   name = "${var.proxmox_vm_name}-${format("%02d", count.index+1)}"
   target_node = var.node_names[count.index % length(var.node_names)]
-  clone = "template-${var.node_names[count.index % length(var.node_names)]}"
+  clone = "template-debian-${var.node_names[count.index % length(var.node_names)]}"
   full_clone = true
   os_type = "cloud-init"
   sockets = 1
@@ -42,7 +42,7 @@ resource "proxmox_vm_qemu" "k3s-vm" {
   qemu_os = "l26"
   vcpus = var.vm_core_count
   disk {
-    type    = "virtio"
+    type = "scsi"
     storage = "local"
     size = "${var.vm_disk_size_gb}G"
   }

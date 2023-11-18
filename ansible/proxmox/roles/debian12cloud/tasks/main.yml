@@ -5,7 +5,7 @@
     api_host: "localhost"
     node: "{{ hostname }}"
     name: "debian12cloud"
-    clone: "template-{{ hostname }}"
+    clone: "template-debian-{{ hostname }}"
     memory: 2048  # You can adjust memory, cores, and other parameters as per your needs.
     cores: 1
     sockets: 1
