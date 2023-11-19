@@ -41,11 +41,7 @@ resource "proxmox_vm_qemu" "k3s-vm" {
   ciuser = var.user_name
   qemu_os = "l26"
   vcpus = var.vm_core_count
-  disk {
-    type = "scsi"
-    storage = "local"
-    size = "${var.vm_disk_size_gb}G"
-  }
+  oncreate = false
   lifecycle {
     ignore_changes = [
         network
@@ -60,9 +56,53 @@ resource "proxmox_vm_qemu" "k3s-vm" {
     null_resource.ssh_key_gen
   ]
 }
+resource "null_resource" "resize_disk" {
+  count = var.vm_count
+
+  triggers = {
+    full_vm_id = proxmox_vm_qemu.k3s-vm[count.index].id
+    disk_size_gb = var.vm_disk_size_gb
+  }
+
+  connection {
+    type        = "ssh"
+    host        = var.external_ip
+    user        = var.user_name
+    private_key = file("~/.ssh/id_ed25519")
+    port        = var.port
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sleep 15",
+      "FULL_VM_ID=${self.triggers.full_vm_id}",
+      "echo $FULL_VM_ID",
+      "VM_ID=$(echo $FULL_VM_ID | cut -d '/' -f 3)",
+      "echo $VM_ID",
+      "CURRENT_SIZE=$(sudo qm config $VM_ID | grep virtio0: | cut -d '=' -f 2 | cut -d 'G' -f 1)",
+      "echo $CURRENT_SIZE",
+      "DISK_SIZE_GB=${self.triggers.disk_size_gb}",
+      "echo $DISK_SIZE_GB",
+      "INCREASE_SIZE=$(($DISK_SIZE_GB - $CURRENT_SIZE))",
+      "echo $INCREASE_SIZE",
+      "if [ $INCREASE_SIZE -gt 0 ]; then",
+      "  echo sudo qm resize $VM_ID virtio0 \"+$INCREASE_SIZE\"G",
+      "  sudo qm resize $VM_ID virtio0 \"+$INCREASE_SIZE\"G",
+      "fi",
+      #"echo sudo qm start $VM_ID"
+      #"sudo qm start $VM_ID"
+    ]
+  }
+  depends_on = [
+    proxmox_vm_qemu.k3s-vm
+  ]
+}
+
+
+
 resource "null_resource" "update" {
   count = var.vm_count
-  depends_on = [proxmox_vm_qemu.k3s-vm]
+  depends_on = [null_resource.resize_disk]
   
   connection {
     type        = "ssh"
