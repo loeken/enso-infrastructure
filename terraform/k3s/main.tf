@@ -22,7 +22,36 @@ data "local_file" "proxmox_pub_key" {
   filename = "/tmp/${replace(var.external_ip, ".", "_")}_id_ed25519.pub"
   depends_on = [null_resource.ssh_key_gen]
 }
+resource "null_resource" "generate_next_vm_id" {
+  count = var.vm_count
 
+  connection {
+    type        = "ssh"
+    host        = var.external_ip
+    user        = var.user_name
+    private_key = file("~/.ssh/id_ed25519")
+    port        = var.port
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo pvesh get /cluster/nextid > /tmp/next_vm_id.txt"
+    ]
+  }
+}
+
+resource "null_resource" "download_next_vm_id" {
+  depends_on = [null_resource.generate_next_vm_id]
+
+  provisioner "local-exec" {
+    command = "scp -P ${var.port} -o StrictHostKeyChecking=no ${var.user_name}@${var.external_ip}:/tmp/next_vm_id.txt ${path.module}/next_vm_id.txt"
+  }
+}
+
+data "local_file" "next_vm_id" {
+  depends_on = [null_resource.download_next_vm_id]
+  filename   = "${path.module}/next_vm_id.txt"
+}
 resource "proxmox_vm_qemu" "k3s-vm" {
   count = var.vm_count
   agent = 1
@@ -41,7 +70,13 @@ resource "proxmox_vm_qemu" "k3s-vm" {
   ciuser = var.user_name
   qemu_os = "l26"
   vcpus = var.vm_core_count
-  oncreate = false
+  disk {
+    file   = "${chomp(data.local_file.next_vm_id.content)}/vm-${chomp(data.local_file.next_vm_id.content)}-disk-0.raw"
+    volume = "local:${chomp(data.local_file.next_vm_id.content)}/vm-${chomp(data.local_file.next_vm_id.content)}-disk-0.raw"
+    type    = "virtio"
+    storage = "local"
+    size = "${var.vm_disk_size_gb}G"
+  }
   lifecycle {
     ignore_changes = [
         network
@@ -56,6 +91,7 @@ resource "proxmox_vm_qemu" "k3s-vm" {
     null_resource.ssh_key_gen
   ]
 }
+## for some fucked up reason the disk doenst resize above so we ll do quick and very dirty fixing of the problem by resizing and rebooting the vm ...
 resource "null_resource" "resize_disk" {
   count = var.vm_count
 
@@ -86,11 +122,11 @@ resource "null_resource" "resize_disk" {
       "INCREASE_SIZE=$(($DISK_SIZE_GB - $CURRENT_SIZE))",
       "echo $INCREASE_SIZE",
       "if [ $INCREASE_SIZE -gt 0 ]; then",
+      "  sudo qm stop $VM_ID",
       "  echo sudo qm resize $VM_ID virtio0 \"+$INCREASE_SIZE\"G",
       "  sudo qm resize $VM_ID virtio0 \"+$INCREASE_SIZE\"G",
       "fi",
-      #"echo sudo qm start $VM_ID"
-      #"sudo qm start $VM_ID"
+      "sudo qm start $VM_ID",
     ]
   }
   depends_on = [
