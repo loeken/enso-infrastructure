@@ -426,9 +426,8 @@
       - name: Get next VM ID and clone VM then Convert VM to a Template
         delegate_to: "{{ inventory_hostname }}"
         shell: |
-          NEWID=$(pvesh get /cluster/nextid) && \
-          qm clone {{ result.vmid }} $NEWID --name template-debian-{{ hostname }} --full true && \
-          qm template $NEWID
+          qm clone {{ result.vmid }} 999 --name template-debian-{{ hostname }} --full true && \
+          qm template 999
           qm destroy {{ result.vmid }}
         throttle: 1
       when: result is changed

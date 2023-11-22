@@ -113,9 +113,8 @@
   - name: Get next VM ID for OPNsense and clone VM then Convert VM to a Template
     delegate_to: "{{ inventory_hostname }}"
     shell: |
-      NEWID=$(pvesh get /cluster/nextid) && \
-      qm clone {{ opnsense_result.vmid }} $NEWID --name template-opnsense-{{ hostname }} --full true && \
-      qm template $NEWID
+      qm clone {{ opnsense_result.vmid }} 998 --name template-opnsense-{{ hostname }} --full true && \
+      qm template 998
       qm destroy {{ opnsense_result.vmid }}
       sleep 10
     throttle: 1

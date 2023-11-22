@@ -1,14 +1,15 @@
 terraform {
     required_providers {
         proxmox = {
-            source = "loeken/proxmox"
-            version = "2.9.16"
+            source = "bpg/proxmox"
+            version = "0.38.1"
         }
     }
 }
 provider "proxmox" {
-    pm_api_url = "https://localhost:${var.tunnel_port}/api2/json" 
-    pm_password = var.root_password
-    pm_user = "root@pam"
-    pm_tls_insecure = "true"
+    endpoint = "https://localhost:${var.tunnel_port}/api2/json" 
+    username = "root@pam"
+    password = var.root_password
+    insecure = true
+    tmp_dir  = "/var/tmp"
 } 
