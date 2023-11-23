@@ -10,7 +10,7 @@ resource "null_resource" "ssh_key_gen" {
   provisioner "remote-exec" {
     inline = [
         "mkdir -p /home/${var.user_name}/.ssh",
-        "if [ ! -f /home/${var.user_name}/.ssh/id_ed25519 ]; then ssh-keygen -t ed25519 -f /home/${var.user_name}/.ssh/id_ed25519 -N 'enso@enso'; fi"
+        "if [ ! -f /home/${var.user_name}/.ssh/id_ed25519 ]; then ssh-keygen -t ed25519 -f /home/${var.user_name}/.ssh/id_ed25519 -N ''; fi"
     ]
   }
   provisioner "local-exec" {
