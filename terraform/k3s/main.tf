@@ -41,11 +41,15 @@ resource "proxmox_virtual_environment_vm" "k3s_vm" {
   lifecycle {
     ignore_changes = [
       network_device,
-      network_interface_names,
-      mac_addresses,
     ]
   }
-
+  memory {
+    dedicated = "${var.vm_memory_mb}"
+  }
+  cpu {
+    type = "x86-64-v2-AES"
+    cores = "${var.vm_core_count}"
+  }
   # VM configuration as per your requirements
   startup {
     order      = "3"
@@ -147,7 +151,15 @@ resource "null_resource" "k3s-installation" {
     inline = [
       <<-EOT
         extra_args="--disable=traefik,servicelb --node-external-ip=${var.external_ip} --advertise-address=${proxmox_virtual_environment_vm.k3s_vm[count.index].ipv4_addresses[1][0]} --node-ip=${proxmox_virtual_environment_vm.k3s_vm[count.index].ipv4_addresses[1][0]} --cluster-init"
-        k3sup install --host ${proxmox_virtual_environment_vm.k3s_vm[count.index].ipv4_addresses[1][0]} --ssh-key /home/${var.user_name}/.ssh/id_ed25519 --user ${var.user_name} --cluster --k3s-version ${var.kubernetes_version} --k3s-extra-args "$extra_args" && echo 'waiting 1 minute for the metrics api to be up' && sleep 60
+        k3sup install --host ${proxmox_virtual_environment_vm.k3s_vm[count.index].ipv4_addresses[1][0]} --ssh-key /home/${var.user_name}/.ssh/id_ed25519 --user ${var.user_name} --cluster --k3s-version ${var.kubernetes_version} --k3s-extra-args "$extra_args"
+
+        # Loop to wait for the metrics API to be up
+        echo "Waiting for the metrics API to be up..."
+        until kubectl get --raw "/apis/metrics.k8s.io/v1beta1" &> /dev/null; do 
+          echo "Metrics API not ready yet, waiting..."
+          sleep 5
+        done
+        echo "Metrics API is up and running."
       EOT
     ]
   }
