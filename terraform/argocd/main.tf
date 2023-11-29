@@ -88,6 +88,9 @@ resource "null_resource" "apply_secret" {
 
 //core apps
 resource "local_file" "argocd_app_core" {
+  depends_on = [
+    null_resource.apply_secret
+  ]
   for_each = { for k, v in var.RepoList : k => v }
 
   filename = "${replace(each.key, "/", "-")}-argocd-app-core.yaml"

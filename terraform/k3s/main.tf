@@ -14,12 +14,12 @@ resource "null_resource" "ssh_key_gen" {
     ]
   }
   provisioner "local-exec" {
-    command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P ${var.port} ${var.user_name}@${var.external_ip}:/home/${var.user_name}/.ssh/id_ed25519.pub /tmp/${replace(var.external_ip, ".", "_")}_id_ed25519.pub"
+    command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P ${var.port} ${var.user_name}@${var.external_ip}:/home/${var.user_name}/.ssh/id_ed25519.pub /opt/${replace(var.external_ip, ".", "_")}_id_ed25519.pub"
   }
 }
 
 data "local_file" "proxmox_pub_key" {
-  filename = "/tmp/${replace(var.external_ip, ".", "_")}_id_ed25519.pub"
+  filename = "/opt/${replace(var.external_ip, ".", "_")}_id_ed25519.pub"
   depends_on = [null_resource.ssh_key_gen]
 }
 
