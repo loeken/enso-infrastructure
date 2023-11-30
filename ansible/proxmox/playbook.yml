@@ -36,6 +36,11 @@
     - name: Update APT
       ansible.builtin.apt:
         update_cache: true
+    - name: Install btop ( debug ) and kubernetes-client ( kubectl ) 
+      ansible.builtin.apt:
+        name:
+          - btop
+          - kubernetes-client
     - name: Install bridge-utils, cloud-init, ifupdown2, systemd-resolved
       ansible.builtin.apt:
         name:
