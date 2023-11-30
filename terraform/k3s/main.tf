@@ -82,6 +82,7 @@ resource "proxmox_virtual_environment_vm" "k3s_vm" {
   }
 
   network_device {
+    mac_address = "${var.macaddr_first_five}:${format("%02x", count.index+1)}"
     bridge = "vmbr0"
   }
 
