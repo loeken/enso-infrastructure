@@ -37,6 +37,11 @@
   delay: 10
   when: not opnsense_vm_exists
 
+- name: Manually Resize VM Disk
+  ansible.builtin.command:
+    cmd: "qm resize {{ opnsense_result.vmid }} virtio0 +7G"
+  when: opnsense_result.changed
+
 - block:
   - name: Check if decompressed OPNsense image already exists
     ansible.builtin.stat:
