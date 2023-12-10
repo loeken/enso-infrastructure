@@ -47,8 +47,9 @@ resource "proxmox_virtual_environment_vm" "k3s_vm" {
     dedicated = "${var.vm_memory_mb}"
   }
   cpu {
-    type = "x86-64-v2-AES"
+    type = "host"
     cores = "${var.vm_core_count}"
+    sockets = 1
   }
   # VM configuration as per your requirements
   startup {
