@@ -14,7 +14,6 @@ touch /.probe.for.growfs
 
 pkg update
 pkg upgrade -y
-pkg install -y os-sunnyvalley nano
-pkg install -y os-adguardhome-maxit os-sensei os-sensei-updater os-theme-rebellion
+pkg install -y os-theme-rebellion
 
 reboot
