@@ -9,7 +9,7 @@ resource "null_resource" "k3s_installation" {
 
   provisioner "remote-exec" {
     inline = [
-      "k3sup install --ip ${var.external_ip} --user ${var.user_name} --ssh-key ${var.ssh_private_key_path} --k3s-version ${var.k3s_version} --cluster",
+      "k3sup install --ip ${var.external_ip} --user ${var.user_name} --ssh-key ${var.ssh_private_key_path} --k3s-version ${var.kubernetes_version} --cluster",
     ]
   }
 }
