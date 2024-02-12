@@ -1,3 +1,22 @@
+resource "null_resource" "k3sup_installation" {
+  connection {
+    type        = "ssh"
+    host        = var.external_ip
+    user        = var.user_name
+    private_key = file(var.ssh_private_key_path)
+    port        = var.port
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "curl -sLS https://get.k3sup.dev | sh",
+      "sudo install k3sup /usr/local/bin/"
+    ]
+  }
+  depends_on = [
+    null_resource.update
+  ]
+}
 resource "null_resource" "k3s_installation" {
   connection {
     type        = "ssh"
