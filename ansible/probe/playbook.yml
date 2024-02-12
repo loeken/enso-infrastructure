@@ -43,6 +43,11 @@
       ansible.builtin.set_fact:
         k3s_running: "{{ 'k3s.service' in ansible_facts.services and ansible_facts.services['k3s.service'].state == 'running' }}"
 
+    # Determine if the environment is virtualized
+    - name: Determine environment (baremetal or virtualized)
+      ansible.builtin.set_fact:
+        environment_type: "{{ 'baremetal' if ansible_virtualization_role == 'host' else 'virtualized' }}"
+
     - name: remove last file
       file:
         path: "/tmp/enso-probe-output.txt"
@@ -51,7 +56,15 @@
 
     - name: Save facts to file on local
       ansible.builtin.copy: 
-        content: "{{ ansible_facts | combine({'pve_cluster_running': pve_cluster_running, 'k3s_running': k3s_running}) | to_nice_json }}"
+        content: |
+          {{
+            ansible_facts | 
+            combine({
+              'pve_cluster_running': pve_cluster_running, 
+              'k3s_running': k3s_running,
+              'environment_type': environment_type
+            }) | to_nice_json 
+          }}
         dest: "/tmp/enso-probe-output.txt"
 
     - name: Fetch the file to local
