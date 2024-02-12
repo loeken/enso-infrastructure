@@ -12,6 +12,14 @@ resource "null_resource" "k3s_installation" {
       "k3sup install --ip ${var.external_ip} --user ${var.user_name} --ssh-key ${var.ssh_private_key_path} --k3s-version ${var.kubernetes_version} --cluster",
     ]
   }
+  provisioner "local-exec" {
+    command = format("scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P %s %s@%s:/home/%s/kubeconfig ./kubeconfig",
+      var.port,
+      var.user_name,
+      var.external_ip,
+      var.user_name
+    )
+  }
 }
 
 output "k3s_cluster_info" {
