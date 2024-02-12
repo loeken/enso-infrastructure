@@ -15,11 +15,6 @@ resource "null_resource" "k3s_installation" {
     ]
   }
 
-  # Optional: Add a delay for non-master nodes to ensure masters are fully set up
-  provisioner "local-exec" {
-    command = "sleep 30"
-    when    = count.index >= 3 ? "create" : "destroy"
-  }
 }
 
 output "k3s_master_node" {
