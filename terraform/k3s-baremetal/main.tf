@@ -1,7 +1,3 @@
-variable "ssh_private_key_path" {
-  description = "Path to the SSH private key"
-  default     = "~/.ssh/id_ed25519"
-}
 resource "null_resource" "k3s_installation" {
   connection {
     type        = "ssh"

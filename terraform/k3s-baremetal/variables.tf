@@ -11,6 +11,7 @@ variable "user_name" {
 variable "ssh_private_key_path" {
   description = "Path to the SSH private key"
   type        = string
+  default     = "~/.ssh/id_ed25519"
 }
 
 variable "kubernetes_version" {
