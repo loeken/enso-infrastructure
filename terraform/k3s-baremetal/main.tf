@@ -13,9 +13,6 @@ resource "null_resource" "k3sup_installation" {
       "sudo install k3sup /usr/local/bin/"
     ]
   }
-  depends_on = [
-    null_resource.update
-  ]
 }
 resource "null_resource" "k3s_installation" {
   connection {
@@ -39,6 +36,10 @@ resource "null_resource" "k3s_installation" {
       var.user_name
     )
   }
+
+  depends_on = [
+    null_resource.k3sup_installation
+  ]
 }
 
 output "k3s_cluster_info" {
